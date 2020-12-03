@@ -1,0 +1,16 @@
+{
+  "name": "gemini-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node example.js"
+  },
+  "author": "Joshua Kaplan",
+  "license": "ISC",
+  "dependencies": {
+    "mime": "^2.4.6",
+    "path-to-regexp": "^6.2.0",
+    "truncate-utf8-bytes": "^1.0.2"
+  }
+}
