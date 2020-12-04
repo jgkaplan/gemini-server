@@ -136,9 +136,10 @@ class Server {
           if(res.getStatus() == STATUS._20){
             //send body
             conn.write(res.format_body());
+            conn.end();
+          }else{
+            conn.destroy();
           }
-          console.log(res.format_body());
-          conn.destroy();
         })
       });
       s.listen(port, callback);
