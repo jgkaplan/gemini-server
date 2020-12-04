@@ -4,14 +4,14 @@ This is a server framework in Node.js for the [Gemini Protocol](https://gemini.c
 TLS is a required part of the Gemini protocol. You can generate keys/certificates using
 `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj '/CN=localhost'`
 
-<!-- ## Install
-`npm install gemini-server` -->
+## Install
+`npm install gemini-server`
 
 ## Usage
 
 ### Create a gemini server
 ```javascript
-const gemini = require('gemini-server'); //not in npm yet whoops
+const gemini = require('gemini-server');
 
 const app = gemini(options)
 ```

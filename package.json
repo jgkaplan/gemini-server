@@ -6,6 +6,10 @@
   "scripts": {
     "test": "node example.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgkaplan/gemini-server.git"
+  },
   "author": "Joshua Kaplan",
   "license": "ISC",
   "dependencies": {
