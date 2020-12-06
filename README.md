@@ -25,7 +25,14 @@ This uses the express conventions, with the modification that the only method is
 ```javascript
 app.on(path, handler);
 ```
+or
+```javascript
+app.on(path, ...middleware, handler);
+```
 Where `handler` is a function which takes in a `Request` and a `Response`, and returns nothing.
+And `middleware` is 0 or more functions which take `(req, res, next)` and return nothing.
+A middleware function should call `next()` to continue onto the next function for handling.
+It should not call `next` and should instead set the `res` object if it should return.
 
 Examples of path:
 `/` for the root of the site
@@ -39,7 +46,13 @@ Examples of handler:
 `gemini.static(dir)` serve a directory
 `gemini.redirect(url)` redirect to a url
 
+Examples of middleware:
+`gemini.requireInput(prompt="Input requested")` Proceed to handler only if user input is given, otherwise request input.
+
+`gemini.requireCert` Proceed to handler only if user certificate is provided, otherwise request a certificate.
+
 ### Static
+NOTE: not yet implemented
 `gemini.static(dir)` will serve the files in a directory
 
 ```javascript
@@ -59,6 +72,8 @@ The request object is passed to request handlers.
 `req.url`The URL object of the request
 `req.path`The path component of the url
 `req.query` The query component of the url (used for handling input)
+`req.cert` The certificate object, if the client sent one
+`req.fingerprint` The fingerprint of the certificate object, if the client sent one
 
 ### Response object
 The response object is passed to request handlers.
@@ -103,6 +118,30 @@ app.on('/input', (req, res) => {
   }else{
     res.input('type something');
   }
+});
+
+app.on('/testMiddlewear', gemini.requireInput("enter something"), (req, res) => {
+  res.data('thanks. you typed ' + req.query);
+});
+
+app.on('/other', (req, res) => {
+  res.data('welcome to the other page');
+})
+
+app.on('/test', gemini.static('./public/things'));
+
+app.on('/redirectMe', gemini.redirect('/other'));
+
+app.on('/cert', (req, res) => {
+  if(!req.fingerprint){
+    res.certify();
+  }else{
+    res.data('thanks for the cert');
+  }
+})
+
+app.on('/protected', gemini.requireCert, (req, res) => {
+  res.data('only clients with certificates can get here');
 });
 
 //start listening. Optionally specify port and callback
