@@ -33,6 +33,7 @@ Where `handler` is a function which takes in a `Request` and a `Response`, and r
 And `middleware` is 0 or more functions which take `(req, res, next)` and return nothing.
 A middleware function should call `next()` to continue onto the next function for handling.
 It should not call `next` and should instead set the `res` object if it should return.
+NOTE: middleware looks similar to express middleware, but isn't compatible.
 
 Examples of path:
 `/` for the root of the site
