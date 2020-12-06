@@ -36,22 +36,22 @@ Examples of path:
 
 Examples of handler:
 `function(req, res){ // do stuff }` general form
-`app.static(dir)` serve a directory
-`app.redirect(url)` redirect to a url
+`gemini.static(dir)` serve a directory
+`gemini.redirect(url)` redirect to a url
 
 ### Static
-`app.static(dir)` will serve the files in a directory
+`gemini.static(dir)` will serve the files in a directory
 
 ```javascript
-app.on('/someFiles', app.static('src/files'));
+app.on('/someFiles', gemini.static('src/files'));
 ```
 
 ### Redirect
-`app.redirect(url)` will redirect to the specified url
+`gemini.redirect(url)` will redirect to the specified url
 ```javascript
-app.on('/redirectMe', app.redirect('/goingHereInstead'));
+app.on('/redirectMe', gemini.redirect('/goingHereInstead'));
 
-app.on('/redirectOther', app.redirect('http://example.com'));
+app.on('/redirectOther', gemini.redirect('http://example.com'));
 ```
 
 ### Request object
@@ -112,10 +112,12 @@ app.listen(() => {
 ```
 
 ## Todo
-- [ ] Documentation
+- [x] Documentation
 - [ ] Utility functions
 	- [ ] Static directory serving
 		- [ ] automatic index file
-- [ ] Certificates
-- [ ] Middleware support
+- [x] Certificates
+- [x] Middleware support
 - [ ] Session helper functions
+- [ ] Router
+- [ ] View engines

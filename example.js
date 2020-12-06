@@ -20,6 +20,30 @@ app.on('/input', (req, res) => {
   }
 });
 
+app.on('/testMiddlewear', gemini.requireInput("enter something"), (req, res) => {
+  res.data('thanks. you typed ' + req.query);
+});
+
+app.on('/other', (req, res) => {
+  res.data('welcome to the other page');
+})
+
+app.on('/test', gemini.static('./src/things'));
+
+app.on('/redirectMe', gemini.redirect('/other'));
+
+app.on('/cert', (req, res) => {
+  if(!req.fingerprint){
+    res.certify();
+  }else{
+    res.data('thanks for the cert');
+  }
+})
+
+app.on('/protected', gemini.requireCert, (req, res) => {
+  res.data('only clients with certificates can get here');
+});
+
 // app.on('*', (req, res) => {
 //   res.data('nyaa');
 // });
