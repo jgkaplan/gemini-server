@@ -27,7 +27,7 @@ class Server {
 		    rejectUnauthorized: false
       }, (conn) => {
         conn.setEncoding('utf8');
-        conn.on('data', (data) => {
+        conn.on('data', async (data) => {
           let u = url.parse(data);
           if(u.protocol !== 'gemini' && u.protocol !== 'gemini:'){
             //error
@@ -37,17 +37,26 @@ class Server {
           }
           let req = new Request(u, conn.getPeerCertificate());
           let res = new Response(STATUS._51, "Not Found.");
+          let matched_route = null; // route in the stack that matches the request path
           for(let route of this.#stack) {
             if(route.fast_star || route.regexp != null && route.regexp.exec(u.pathname)){
-              let handle = function(index){
-                if(route.handlers.length > index){
-                  route.handlers[index](req, res, function(){handle(index + 1)})
-                }
-              }
-              handle(0);
-              break;
+                matched_route = route;
+                break;
             }
           }
+
+          if(matched_route === null){
+            conn.destroy();
+            return;
+          }
+
+          let handle = async function(index){
+            if(matched_route.handlers.length > index){
+              await matched_route.handlers[index](req, res, function(){handle(index + 1)});
+            }
+          }
+          await handle(0);
+
           conn.write(res.format_header());
           if(res.getStatus() == STATUS._20){
             //send body
@@ -56,8 +65,10 @@ class Server {
           }else{
             conn.destroy();
           }
+
         })
       });
+
       s.listen(port, callback);
 
     }
