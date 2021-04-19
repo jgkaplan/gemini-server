@@ -1,6 +1,6 @@
 const tls = require('tls');
 const url = require('url');
-const { pathToRegexp } = require("path-to-regexp");
+const { pathToRegexp, match } = require("path-to-regexp");
 const { STATUS } = require('./utils.js');
 const Request = require('./Request.js');
 const Response = require('./Response.js');
@@ -38,9 +38,11 @@ class Server {
           let req = new Request(u, conn.getPeerCertificate());
           let res = new Response(STATUS._51, "Not Found.");
           let matched_route = null; // route in the stack that matches the request path
+          let m = null;
           for(let route of this.#stack) {
-            if(route.fast_star || route.regexp != null && route.regexp.exec(u.pathname)){
+            if(route.fast_star || route.regexp != null && (m = route.match(u.pathname))){
                 matched_route = route;
+                req.params = m.params;
                 break;
             }
           }
@@ -79,6 +81,7 @@ class Server {
                 sensitive: true,
                 strict: false
               }),
+        match: path==='*'?function(){return true;}:match(path, { encode: encodeURI, decode: decodeURIComponent }),
         handlers: handlers,
         fast_star: path === '*'
       })

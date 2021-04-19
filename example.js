@@ -20,6 +20,20 @@ app.on('/input', (req, res) => {
   }
 });
 
+app.on('/paramTest/:foo', (req, res) => {
+  res.data('you went to ' + req.params.foo);
+})
+
+app.on('/async', (req, res) => {
+	if(req.query){
+		setTimeout( function() {
+			res.data('you typed ' + req.query);
+		}, 500)
+	}else{
+		res.input('type something');
+	}
+});
+
 app.on('/testMiddlewear', gemini.requireInput("enter something"), (req, res) => {
   res.data('thanks. you typed ' + req.query);
 });

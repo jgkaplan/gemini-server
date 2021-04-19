@@ -5,6 +5,7 @@ class Request {
     this.query = u.query;
     this.cert = c;
     this.fingerprint = c.fingerprint;
+    this.params = {};
   }
 }
 

@@ -73,6 +73,7 @@ The request object is passed to request handlers.
 `req.url`The URL object of the request
 `req.path`The path component of the url
 `req.query` The query component of the url (used for handling input)
+`req.params` The params of a matched route
 `req.cert` The certificate object, if the client sent one
 `req.fingerprint` The fingerprint of the certificate object, if the client sent one
 
@@ -120,6 +121,11 @@ app.on('/input', (req, res) => {
     res.input('type something');
   }
 });
+
+//Route params
+app.on('/paramTest/:foo', (req, res) => {
+  res.data('you went to ' + req.params.foo);
+})
 
 app.on('/testMiddlewear', gemini.requireInput("enter something"), (req, res) => {
   res.data('thanks. you typed ' + req.query);
