@@ -42,7 +42,7 @@ class Server {
           for(let route of this.#stack) {
             if(route.fast_star || route.regexp != null && (m = route.match(u.pathname))){
                 matched_route = route;
-                req.params = m?m.params:null;
+                req.params = m ? m.params : null;
                 break;
             }
           }
