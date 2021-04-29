@@ -1,4 +1,4 @@
-module.exports.STATUS = {
+export const STATUS = {
     _10: 10, //input
     _11: 11, //sensitive input
     _20: 20, //success
@@ -16,5 +16,5 @@ module.exports.STATUS = {
     _59: 59, //bad request
     _60: 60, //client certificate required
     _61: 61, //client certificate not authorized
-    _62: 62  //client certificate not valid
+    _62: 62, //client certificate not valid
 }

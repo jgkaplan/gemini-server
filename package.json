@@ -2,9 +2,10 @@
   "name": "gemini-server",
   "version": "1.2.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "node example.js"
+    "test": "node example.js",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
@@ -16,5 +17,12 @@
     "mime": "^2.4.6",
     "path-to-regexp": "^6.2.0",
     "truncate-utf8-bytes": "^1.0.2"
+  },
+  "devDependencies": {
+    "@types/mime": "^2.0.3",
+    "@types/node": "^15.0.1",
+    "@types/path-to-regexp": "^1.7.0",
+    "@types/truncate-utf8-bytes": "^1.0.0",
+    "typescript": "^4.2.4"
   }
 }
