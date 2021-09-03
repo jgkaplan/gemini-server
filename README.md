@@ -94,6 +94,19 @@ s is an int
 
 `res.redirect(url)` Redirect the client to the specified url.
 
+### Middleware
+
+A middleware registered through `app.use` will be executed before every route handler. If a path is given as the first argument, only that path will be affected.
+
+```javascript
+app.use((req, res, next) => {
+    console.log(`Route ${req.path} was called`);
+});
+app.use('/foo', (req, res, next) => {
+    console.log(`Foo route was called`);
+});
+```
+
 ## Example Server
 ```javascript
 const fs = require('fs');
