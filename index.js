@@ -11,11 +11,13 @@ class Server {
     #key;
     #cert;
     #stack;
+    #middlewares;
 
     constructor(key, cert) {
       this.#key = key;
       this.#cert = cert;
       this.#stack = [];
+      this.#middlewares = [];
     }
 
     listen(callback=null, port=1965){
@@ -39,25 +41,36 @@ class Server {
           let res = new Response(STATUS._51, "Not Found.");
           let matched_route = null; // route in the stack that matches the request path
           let m = null;
+
+          const isMatch = (route) => route.fast_star || route.regexp != null && (m = route.match(u.pathname));
+
+          const middlewares = this.#middlewares.filter(isMatch);
+          const middlewareHandlers = middlewares.flatMap(({ handlers }) => handlers);
+
+
           for(let route of this.#stack) {
-            if(route.fast_star || route.regexp != null && (m = route.match(u.pathname))){
+            if(isMatch(route)){
                 matched_route = route;
                 req.params = m ? m.params : null;
                 break;
             }
           }
 
+          let handle = async function(handlers) {
+              if(handlers.length > 0) {
+                  await handlers[0](req, res, () => handle(handlers.slice(1)));
+              }
+          }
+
+          handle(middlewareHandlers);
+
+
           if(matched_route === null){
             conn.destroy();
             return;
           }
 
-          let handle = async function(index){
-            if(matched_route.handlers.length > index){
-              await matched_route.handlers[index](req, res, function(){handle(index + 1)});
-            }
-          }
-          await handle(0);
+          await handle(matched_route.handlers);
 
           conn.write(res.format_header());
           if(res.getStatus() == STATUS._20){
@@ -85,6 +98,24 @@ class Server {
         handlers: handlers,
         fast_star: path === '*'
       })
+    }
+
+    use(...params) {
+      // Apply middlewares to path if it's given as the first argument
+      const hasPath = typeof params[0] === 'string';
+      const path = hasPath && params[0];
+
+      const handlers = hasPath ? params.slice(1) : params;
+
+      this.#middlewares.push({
+        regexp: hasPath && path !== '*' ? pathToRegexp(path, [], {
+                sensitive: true,
+                strict: false
+              }) : null,
+        match: !hasPath || path === '*' ? () => true : match(path, { encode: encodeURI, decode: decodeURIComponent }),
+        handlers,
+        fast_star: !hasPath || path === '*',
+      });
     }
 }
 

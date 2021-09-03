@@ -8,6 +8,11 @@ const options = {
 
 const app = gemini(options);
 
+app.use((req, res, next) => {
+    console.log("Handling path", req.path);
+    next();
+});
+
 app.on('/', (req, res) => {
   res.file('test.gemini');
 });
