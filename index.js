@@ -8,23 +8,23 @@ const Response = require('./Response.js');
 
 
 class Server {
-    #key;
-    #cert;
-    #stack;
-    #middlewares;
+    _key;
+    _cert;
+    _stack;
+    _middlewares;
 
     constructor(key, cert) {
-      this.#key = key;
-      this.#cert = cert;
-      this.#stack = [];
-      this.#middlewares = [];
+      this._key = key;
+      this._cert = cert;
+      this._stack = [];
+      this._middlewares = [];
     }
 
     listen(callback=null, port=1965){
       //try catch the handler. if error, respond with error
       let s = tls.createServer({
-        key: this.#key,
-        cert: this.#cert,
+        key: this._key,
+        cert: this._cert,
         requestCert: true,
 		    rejectUnauthorized: false
       }, (conn) => {
@@ -44,11 +44,11 @@ class Server {
 
           const isMatch = (route) => route.fast_star || route.regexp != null && (m = route.match(u.pathname));
 
-          const middlewares = this.#middlewares.filter(isMatch);
+          const middlewares = this._middlewares.filter(isMatch);
           const middlewareHandlers = middlewares.flatMap(({ handlers }) => handlers);
 
 
-          for(let route of this.#stack) {
+          for(let route of this._stack) {
             if(isMatch(route)){
                 matched_route = route;
                 req.params = m ? m.params : null;
@@ -89,7 +89,7 @@ class Server {
     }
 
     on(path, ...handlers){ //path: string, handler: (Request * Response) -> null
-      this.#stack.push({
+      this._stack.push({
         regexp: path==='*'?null:pathToRegexp(path, [], {
                 sensitive: true,
                 strict: false
@@ -107,7 +107,7 @@ class Server {
 
       const handlers = hasPath ? params.slice(1) : params;
 
-      this.#middlewares.push({
+      this._middlewares.push({
         regexp: hasPath && path !== '*' ? pathToRegexp(path, [], {
                 sensitive: true,
                 strict: false
