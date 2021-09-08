@@ -29,6 +29,10 @@ class Server {
 		    rejectUnauthorized: false
       }, (conn) => {
         conn.setEncoding('utf8');
+	conn.on('error', (err) => {
+	  if(err && err.code === "ECONNRESET") return;
+	  console.error(err);
+	});
         conn.on('data', async (data) => {
           let u = url.parse(data);
           if(u.protocol !== 'gemini' && u.protocol !== 'gemini:'){
