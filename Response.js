@@ -1,7 +1,6 @@
 const truncate = require("truncate-utf8-bytes");
 const mime = require("mime");
 const fs = require("fs");
-const { STATUS } = require("./utils.js");
 
 mime.define({ "text/gemini": ["gemini", "gmi"] });
 
@@ -58,6 +57,7 @@ class Response {
   redirect(url) {
     this.status(STATUS._30);
     this._setMeta(url);
+    return this;
   }
 
   format_header() {

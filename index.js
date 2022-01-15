@@ -4,6 +4,7 @@ const { pathToRegexp, match } = require("path-to-regexp");
 const { STATUS } = require("./utils.js");
 const Request = require("./Request.js");
 const Response = require("./Response.js");
+const middleware = require("./middleware.js");
 
 class Server {
   _key;
@@ -129,32 +130,8 @@ class Server {
   }
 }
 
-function redirect(url) {
-  return function (req, res) {
-    res.redirect(url);
-  };
-}
-
-function static(path, options = { dotfiles: false, index: false }) {
-}
-
-function requireInput(prompt = "Input requested") {
-  return function (req, res, next) {
-    if (!req.query) {
-      res.input(prompt);
-    } else {
-      next();
-    }
-  };
-}
-
-function requireCert(req, res, next) {
-  if (!req.fingerprint) {
-    res.certify();
-  } else {
-    next();
-  }
-}
+// function static(path, options = { dotfiles: false, index: false }) {
+// }
 
 module.exports = ({ key, cert }) => {
   if (!key || !cert) {
@@ -163,7 +140,7 @@ module.exports = ({ key, cert }) => {
   return new Server(key, cert);
 };
 module.exports.STATUS = STATUS;
-module.exports.static = static;
-module.exports.redirect = redirect;
-module.exports.requireCert = requireCert;
-module.exports.requireInput = requireInput;
+// module.exports.static = static;
+module.exports.redirect = middleware.redirect;
+module.exports.requireCert = middleware.requireCert;
+module.exports.requireInput = middleware.requireInput;

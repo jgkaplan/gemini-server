@@ -67,8 +67,8 @@ app.on("/protected", gemini.requireCert, (req, res) => {
   res.data("only clients with certificates can get here");
 });
 
-// app.on('*', (req, res) => {
-//   res.data('nyaa');
+// app.on("*", (req, res) => {
+//   res.data("nyaa");
 // });
 
 app.listen(() => {
