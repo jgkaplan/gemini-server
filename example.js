@@ -40,7 +40,7 @@ app.on("/async", (req, res) => {
 });
 
 app.on(
-  "/testMiddlewear",
+  "/testMiddleware",
   gemini.requireInput("enter something"),
   (req, res) => {
     res.data("thanks. you typed " + req.query);
@@ -51,7 +51,7 @@ app.on("/other", (req, res) => {
   res.data("welcome to the other page");
 });
 
-app.on("/test", gemini.static("./src/things"));
+// app.on("/test", gemini.static("./src/things"));
 
 app.on("/redirectMe", gemini.redirect("/other"));
 

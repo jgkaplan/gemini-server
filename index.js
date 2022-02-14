@@ -4,6 +4,7 @@ const { pathToRegexp, match } = require("path-to-regexp");
 const { STATUS } = require("./utils.js");
 const Request = require("./Request.js");
 const Response = require("./Response.js");
+const truncate = require("truncate-utf8-bytes");
 
 class Server {
   _key;
@@ -34,14 +35,17 @@ class Server {
       const chunks = [];
       let isDataReceived = false;
       conn.on("data", async (data) => {
+        // data is Buffer | String
         // data can be incomplete
         // Store data until we receive <CR><LF>
         if (isDataReceived) return;
+
         chunks.push(data);
         if (!chunks.join('').includes('\r\n')) return;
         isDataReceived = true;
 
-        let u = url.parse(chunks.join(''));
+        //A url is at most 1024 bytes followed by <CR><LF>
+        let u = new url.URL(truncate(chunks.join('').split('\r\n', 1)[0], 1024));
         if (u.protocol !== "gemini" && u.protocol !== "gemini:") {
           //error
           conn.write("59 Invalid protocol.\r\n");
@@ -144,8 +148,8 @@ function redirect(url) {
   };
 }
 
-function static(path, options = { dotfiles: false, index: false }) {
-}
+// function static(path, options = { dotfiles: false, index: false }) {
+// }
 
 function requireInput(prompt = "Input requested") {
   return function (req, res, next) {
@@ -172,7 +176,7 @@ module.exports = ({ key, cert }) => {
   return new Server(key, cert);
 };
 module.exports.STATUS = STATUS;
-module.exports.static = static;
+// module.exports.static = static;
 module.exports.redirect = redirect;
 module.exports.requireCert = requireCert;
 module.exports.requireInput = requireInput;
