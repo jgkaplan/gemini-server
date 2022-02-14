@@ -31,8 +31,17 @@ class Server {
         if (err && err.code === "ECONNRESET") return;
         console.error(err);
       });
+      const chunks = [];
+      let isDataReceived = false;
       conn.on("data", async (data) => {
-        let u = url.parse(data);
+        // data can be incomplete
+        // Store data until we receive <CR><LF>
+        if (isDataReceived) return;
+        chunks.push(data);
+        if (!chunks.join('').includes('\r\n')) return;
+        isDataReceived = true;
+
+        let u = url.parse(chunks.join(''));
         if (u.protocol !== "gemini" && u.protocol !== "gemini:") {
           //error
           conn.write("59 Invalid protocol.\r\n");
