@@ -13,5 +13,5 @@ declare class Request {
   query: string | null;
   cert: tls.PeerCertificate | tls.DetailedPeerCertificate;
   fingerprint: string;
-  params: {};
+  params: Record<string, string>;
 }

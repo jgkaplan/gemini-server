@@ -4,7 +4,7 @@ import Response from "./Response.d.ts";
 export type middleware = (
   req: Request,
   res: Response,
-  next: middleware,
+  next: () => void,
 ) => void;
 
 export function redirect(url: string): middleware;

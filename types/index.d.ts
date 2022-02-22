@@ -1,10 +1,15 @@
 import tls from "tls";
+import { Buffer } from "node";
+
 import {
   middleware,
   redirect,
   requireCert,
   requireInput,
 } from "./middleware.d.ts";
+
+import Request from "./Request.d.ts";
+import Response from "./Response.d.ts";
 
 export = GeminiServer;
 
@@ -27,7 +32,7 @@ declare class Server {
     fast_star: boolean;
   }[];
   _middlewares: middleware[];
-  listen(callback?: () => void, port?: number): void;
+  listen(callback?: () => void, port?: number): tls.Server;
   on(path: string, ...handlers: middleware[]): void;
   use(path: string, ...params: middleware[]): void;
   use(...params: middleware[]): void;
@@ -37,4 +42,7 @@ declare namespace GeminiServer {
   export { redirect };
   export { requireInput };
   export { requireCert };
+  export { middleware };
+  export { Request };
+  export { Response };
 }

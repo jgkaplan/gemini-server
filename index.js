@@ -21,7 +21,7 @@ class Server {
 
   listen(callback = null, port = 1965) {
     //try catch the handler. if error, respond with error
-    let s = tls.createServer({
+    const s = tls.createServer({
       key: this._key,
       cert: this._cert,
       requestCert: true,
@@ -33,15 +33,15 @@ class Server {
         console.error(err);
       });
       conn.on("data", async (data) => {
-        let u = url.parse(data);
+        const u = url.parse(data);
         if (u.protocol !== "gemini" && u.protocol !== "gemini:") {
           //error
           conn.write("59 Invalid protocol.\r\n");
           conn.destroy();
           return;
         }
-        let req = new Request(u, conn.getPeerCertificate());
-        let res = new Response(STATUS._51, "Not Found.");
+        const req = new Request(u, conn.getPeerCertificate());
+        const res = new Response(STATUS._51, "Not Found.");
         let matched_route = null; // route in the stack that matches the request path
         let m = null;
 
@@ -54,7 +54,7 @@ class Server {
           handlers
         );
 
-        for (let route of this._stack) {
+        for (const route of this._stack) {
           if (isMatch(route)) {
             matched_route = route;
             req.params = m ? m.params : null;
@@ -62,7 +62,7 @@ class Server {
           }
         }
 
-        let handle = async function (handlers) {
+        const handle = async function (handlers) {
           if (handlers.length > 0) {
             await handlers[0](req, res, () => handle(handlers.slice(1)));
           }
@@ -88,7 +88,7 @@ class Server {
       });
     });
 
-    s.listen(port, callback);
+    return s.listen(port, callback);
   }
 
   on(path, ...handlers) { //path: string, handler: (Request * Response) -> null
@@ -141,6 +141,8 @@ module.exports = ({ key, cert }) => {
 };
 module.exports.STATUS = STATUS;
 // module.exports.static = static;
+module.exports.Request = Request;
+module.exports.Response = Response;
 module.exports.redirect = middleware.redirect;
 module.exports.requireCert = middleware.requireCert;
 module.exports.requireInput = middleware.requireInput;
