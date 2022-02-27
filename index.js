@@ -59,7 +59,7 @@ class Server {
 
         const isMatch = (route) =>
           route.fast_star ||
-          route.regexp != null && (m = route.match(u.pathname)) || route.regexp.exec(u.pathname);
+          route.regexp != null && (m = route.match(u.pathname));
 
         const middlewares = this._middlewares.filter(isMatch);
         const middlewareHandlers = middlewares.flatMap(({ handlers }) =>
@@ -137,7 +137,7 @@ class Server {
         : null,
       match: !hasPath || path === "*"
         ? () => true
-        : match(path, { encode: encodeURI, decode: decodeURIComponent }),
+        : match(path, { encode: encodeURI, decode: decodeURIComponent, end: false }),
       handlers,
       fast_star: !hasPath || path === "*",
     });
