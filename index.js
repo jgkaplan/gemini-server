@@ -1,7 +1,6 @@
 const tls = require("tls");
 const url = require("url");
 const { pathToRegexp, match } = require("path-to-regexp");
-const { STATUS } = require("./utils.js");
 const Request = require("./Request.js");
 const Response = require("./Response.js");
 const middleware = require("./middleware.js");
@@ -54,7 +53,7 @@ class Server {
           return;
         }
         const req = new Request(u, conn.getPeerCertificate());
-        const res = new Response(STATUS._51, "Not Found.");
+        const res = new Response(51, "Not Found.");
         let matched_route = null; // route in the stack that matches the request path
         let m = null;
 
@@ -91,9 +90,9 @@ class Server {
         await handle(matched_route.handlers);
 
         conn.write(res.format_header());
-        if (res.getStatus() == STATUS._20) {
+        if (res.getStatus() == 20) {
           //send body
-          conn.write(res.format_body());
+          conn.write(res._body);
           conn.end();
         } else {
           conn.destroy();
@@ -152,11 +151,9 @@ module.exports = ({ key, cert }) => {
   }
   return new Server(key, cert);
 };
-module.exports.STATUS = STATUS;
 // module.exports.static = static;
 module.exports.Request = Request;
 module.exports.Response = Response;
 module.exports.redirect = middleware.redirect;
 module.exports.requireCert = middleware.requireCert;
 module.exports.requireInput = middleware.requireInput;
-

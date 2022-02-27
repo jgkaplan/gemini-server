@@ -5,12 +5,12 @@ export = Response;
 /*~ Write your module's methods and properties in this class */
 declare class Response {
   constructor(
-    status?: status | null,
-    meta?: string | null,
+    status?: status,
+    meta?: string,
   );
   _status: status;
-  _meta: string | null;
-  _body: unknown;
+  _meta: string;
+  _body: Uint8Array | string | Buffer | null;
   _setMeta(m: string): void;
   status(s: status): Response;
   getStatus(): status;
@@ -20,5 +20,4 @@ declare class Response {
   certify(info?: string): Response;
   redirect(url: string): Response;
   format_header(): string;
-  format_body(): Uint8Array | string | Buffer;
 }

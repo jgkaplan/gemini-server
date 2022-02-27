@@ -1,9 +1,9 @@
-const fs = require("fs");
-import gemini, { Request, Response } from "./index.js";
+import { readFileSync } from "fs";
+import gemini, { Request, Response } from "./index";
 
 const options = {
-  cert: fs.readFileSync("cert.pem"),
-  key: fs.readFileSync("key.pem"),
+  cert: readFileSync("cert.pem"),
+  key: readFileSync("key.pem"),
 };
 
 const app = gemini(options);

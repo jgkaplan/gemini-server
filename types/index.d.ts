@@ -10,6 +10,7 @@ import {
 
 import Request from "./Request.d.ts";
 import Response from "./Response.d.ts";
+import status from "./status.d.ts";
 
 export = GeminiServer;
 
@@ -45,4 +46,5 @@ declare namespace GeminiServer {
   export { middleware };
   export { Request };
   export { Response };
+  export { status };
 }
