@@ -59,7 +59,7 @@ class Server {
 
         const isMatch = (route) =>
           route.fast_star ||
-          route.regexp != null && (m = route.match(u.pathname));
+          route.regexp != null && (m = route.match(u.pathname)) || route.regexp.exec(u.pathname);
 
         const middlewares = this._middlewares.filter(isMatch);
         const middlewareHandlers = middlewares.flatMap(({ handlers }) =>
@@ -108,6 +108,7 @@ class Server {
       regexp: path === "*" ? null : pathToRegexp(path, [], {
         sensitive: true,
         strict: false,
+        end: true
       }),
       match: path === "*"
         ? function () {
@@ -131,6 +132,7 @@ class Server {
         ? pathToRegexp(path, [], {
           sensitive: true,
           strict: false,
+          end: false
         })
         : null,
       match: !hasPath || path === "*"
