@@ -173,7 +173,7 @@ function requireCert(req, res, next) {
 
 module.exports = ({ key, cert }) => {
   if (!key || !cert) {
-    throw "Must specify key and cert";
+    throw new Error("Must specify key and cert");
   }
   return new Server(key, cert);
 };
