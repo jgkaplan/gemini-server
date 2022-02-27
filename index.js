@@ -1,9 +1,9 @@
 const tls = require("tls");
 const url = require("url");
 const { pathToRegexp, match } = require("path-to-regexp");
-const { STATUS } = require("./utils.js");
 const Request = require("./Request.js");
 const Response = require("./Response.js");
+const middleware = require("./middleware.js");
 const truncate = require("truncate-utf8-bytes");
 
 class Server {
@@ -21,7 +21,7 @@ class Server {
 
   listen(callback = null, port = 1965) {
     //try catch the handler. if error, respond with error
-    let s = tls.createServer({
+    const s = tls.createServer({
       key: this._key,
       cert: this._cert,
       requestCert: true,
@@ -52,8 +52,8 @@ class Server {
           conn.destroy();
           return;
         }
-        let req = new Request(u, conn.getPeerCertificate());
-        let res = new Response(STATUS._51, "Not Found.");
+        const req = new Request(u, conn.getPeerCertificate());
+        const res = new Response(51, "Not Found.");
         let matched_route = null; // route in the stack that matches the request path
         let m = null;
 
@@ -66,7 +66,7 @@ class Server {
           handlers
         );
 
-        for (let route of this._stack) {
+        for (const route of this._stack) {
           if (isMatch(route)) {
             matched_route = route;
             req.params = m ? m.params : null;
@@ -74,7 +74,7 @@ class Server {
           }
         }
 
-        let handle = async function (handlers) {
+        const handle = async function (handlers) {
           if (handlers.length > 0) {
             await handlers[0](req, res, () => handle(handlers.slice(1)));
           }
@@ -90,9 +90,9 @@ class Server {
         await handle(matched_route.handlers);
 
         conn.write(res.format_header());
-        if (res.getStatus() == STATUS._20) {
+        if (res.getStatus() == 20) {
           //send body
-          conn.write(res.format_body());
+          conn.write(res._body);
           conn.end();
         } else {
           conn.destroy();
@@ -100,7 +100,7 @@ class Server {
       });
     });
 
-    s.listen(port, callback);
+    return s.listen(port, callback);
   }
 
   on(path, ...handlers) { //path: string, handler: (Request * Response) -> null
@@ -142,32 +142,8 @@ class Server {
   }
 }
 
-function redirect(url) {
-  return function (req, res) {
-    res.redirect(url);
-  };
-}
-
 // function static(path, options = { dotfiles: false, index: false }) {
 // }
-
-function requireInput(prompt = "Input requested") {
-  return function (req, res, next) {
-    if (!req.query) {
-      res.input(prompt);
-    } else {
-      next();
-    }
-  };
-}
-
-function requireCert(req, res, next) {
-  if (!req.fingerprint) {
-    res.certify();
-  } else {
-    next();
-  }
-}
 
 module.exports = ({ key, cert }) => {
   if (!key || !cert) {
@@ -175,8 +151,9 @@ module.exports = ({ key, cert }) => {
   }
   return new Server(key, cert);
 };
-module.exports.STATUS = STATUS;
 // module.exports.static = static;
-module.exports.redirect = redirect;
-module.exports.requireCert = requireCert;
-module.exports.requireInput = requireInput;
+module.exports.Request = Request;
+module.exports.Response = Response;
+module.exports.redirect = middleware.redirect;
+module.exports.requireCert = middleware.requireCert;
+module.exports.requireInput = middleware.requireInput;
