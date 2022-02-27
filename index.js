@@ -5,6 +5,7 @@ const { STATUS } = require("./utils.js");
 const Request = require("./Request.js");
 const Response = require("./Response.js");
 const middleware = require("./middleware.js");
+const truncate = require("truncate-utf8-bytes");
 
 class Server {
   _key;
@@ -32,8 +33,20 @@ class Server {
         if (err && err.code === "ECONNRESET") return;
         console.error(err);
       });
+      const chunks = [];
+      let isDataReceived = false;
       conn.on("data", async (data) => {
-        const u = url.parse(data);
+        // data is Buffer | String
+        // data can be incomplete
+        // Store data until we receive <CR><LF>
+        if (isDataReceived) return;
+
+        chunks.push(data);
+        if (!chunks.join('').includes('\r\n')) return;
+        isDataReceived = true;
+
+        //A url is at most 1024 bytes followed by <CR><LF>
+        let u = new url.URL(truncate(chunks.join('').split('\r\n', 1)[0], 1024));
         if (u.protocol !== "gemini" && u.protocol !== "gemini:") {
           //error
           conn.write("59 Invalid protocol.\r\n");
@@ -146,3 +159,4 @@ module.exports.Response = Response;
 module.exports.redirect = middleware.redirect;
 module.exports.requireCert = middleware.requireCert;
 module.exports.requireInput = middleware.requireInput;
+

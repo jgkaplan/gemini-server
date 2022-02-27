@@ -40,7 +40,7 @@ app.on("/async", (req, res) => {
 });
 
 app.on(
-  "/testMiddlewear",
+  "/testMiddleware",
   gemini.requireInput("enter something"),
   (req, res) => {
     res.data("thanks. you typed " + req.query);
