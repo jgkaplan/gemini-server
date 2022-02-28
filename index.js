@@ -108,6 +108,7 @@ class Server {
       regexp: path === "*" ? null : pathToRegexp(path, [], {
         sensitive: true,
         strict: false,
+        end: true
       }),
       match: path === "*"
         ? function () {
@@ -131,11 +132,12 @@ class Server {
         ? pathToRegexp(path, [], {
           sensitive: true,
           strict: false,
+          end: false
         })
         : null,
       match: !hasPath || path === "*"
         ? () => true
-        : match(path, { encode: encodeURI, decode: decodeURIComponent }),
+        : match(path, { encode: encodeURI, decode: decodeURIComponent, end: false }),
       handlers,
       fast_star: !hasPath || path === "*",
     });
@@ -147,7 +149,7 @@ class Server {
 
 module.exports = ({ key, cert }) => {
   if (!key || !cert) {
-    throw "Must specify key and cert";
+    throw new Error("Must specify key and cert");
   }
   return new Server(key, cert);
 };
