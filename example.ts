@@ -14,7 +14,7 @@ app.use((req: Request, _res: Response, next: () => void) => {
 });
 
 app.on("/", (_req: Request, res: Response) => {
-  res.file("test.gemini");
+  res.file("example/test.gemini");
 });
 
 app.on("/input", (req: Request, res: Response) => {
@@ -40,7 +40,7 @@ app.on("/async", (req: Request, res: Response) => {
 });
 
 app.on(
-  "/testMiddlewear",
+  "/testMiddleware",
   gemini.requireInput("enter something"),
   (req: Request, res: Response) => {
     res.data("thanks. you typed " + req.query);
@@ -51,7 +51,7 @@ app.on("/other", (_req: Request, res: Response) => {
   res.data("welcome to the other page");
 });
 
-// app.on("/test", gemini.static("./src/things"));
+app.use("/static", gemini.serveStatic("./example"));
 
 app.on("/redirectMe", gemini.redirect("/other"));
 

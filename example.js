@@ -14,7 +14,7 @@ app.use((req, res, next) => {
 });
 
 app.on("/", (req, res) => {
-  res.file("test.gemini");
+  res.file("example/test.gemini");
 });
 
 app.on("/input", (req, res) => {
@@ -51,7 +51,7 @@ app.on("/other", (req, res) => {
   res.data("welcome to the other page");
 });
 
-// app.on("/test", gemini.static("./src/things"));
+app.use("/static", gemini.serveStatic("./example"));
 
 app.on("/redirectMe", gemini.redirect("/other"));
 
