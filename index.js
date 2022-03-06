@@ -93,7 +93,7 @@ class Server {
         } else if (matched_route !== null) {
           await handle(matched_route.handlers);
         }
-
+        
         conn.write(res.format_header());
         if (res.getStatus() == 20) {
           //send body
@@ -165,3 +165,4 @@ module.exports.Response = Response;
 module.exports.redirect = middleware.redirect;
 module.exports.requireCert = middleware.requireCert;
 module.exports.requireInput = middleware.requireInput;
+module.exports.serveStatic = middleware.serveStatic;
