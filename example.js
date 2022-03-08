@@ -4,6 +4,7 @@ const gemini = require("./index.js");
 const options = {
   cert: fs.readFileSync("cert.pem"),
   key: fs.readFileSync("key.pem"),
+  titan: true
 };
 
 const app = gemini(options);
@@ -14,6 +15,7 @@ app.use((req, res, next) => {
 });
 
 app.on("/", (req, res) => {
+  if (req.protocol == "titan") console.log(req.data.toString("utf8"));
   res.file("test.gemini");
 });
 
