@@ -5,7 +5,6 @@ const Request = require("./Request.js");
 const Response = require("./Response.js");
 const middleware = require("./middleware.js");
 const truncate = require("truncate-utf8-bytes");
-const querystring = require("querystring");
 
 class Server {
   _key;
