@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 app.on("/", (req, res) => {
-  if (req.protocol == "titan") console.log(req.data.toString("utf8"));
+  if (req.protocol == "titan" && req.data) console.log(req.data.toString("utf8"));
   res.file("test.gemini");
 });
 
