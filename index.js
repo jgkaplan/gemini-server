@@ -82,10 +82,7 @@ class Server {
           route.fast_star ||
           route.regexp != null && (m = route.match(u.pathname));
 
-        const middlewares = this._middlewares.filter(isMatch);
-        const middlewareHandlers = middlewares.flatMap(({ handlers }) =>
-          handlers
-        );
+        const middlewareMatches = this._middlewares.filter(isMatch);
 
         for (const route of this._stack) {
           if (isMatch(route)) {
@@ -101,15 +98,23 @@ class Server {
           }
         };
 
-        await handle(middlewareHandlers);
-
-        if (matched_route === null) {
-          conn.destroy();
-          return;
+        const handleMiddlewares = async function (middlewares) {
+          if (middlewares.length > 0) {
+            req.baseUrl += middlewares[0].match(u.pathname).path || '';
+            await handle(middlewares[0].handlers);
+            await handleMiddlewares(middlewares.slice(1));
+          }
         }
 
-        await handle(matched_route.handlers);
+        await handleMiddlewares(middlewareMatches);
 
+        if (matched_route === null && (res._body === null && res.getStatus() == 20)) {
+          conn.destroy();
+          return;
+        } else if (matched_route !== null) {
+          await handle(matched_route.handlers);
+        }
+        
         conn.write(res.format_header());
         if (res.getStatus() == 20) {
           //send body
@@ -161,6 +166,7 @@ class Server {
         : match(path, { encode: encodeURI, decode: decodeURIComponent, end: false }),
       handlers,
       fast_star: !hasPath || path === "*",
+      mountPath: hasPath ? path : null,
     });
   }
 }
@@ -180,3 +186,4 @@ module.exports.Response = Response;
 module.exports.redirect = middleware.redirect;
 module.exports.requireCert = middleware.requireCert;
 module.exports.requireInput = middleware.requireInput;
+module.exports.serveStatic = middleware.serveStatic;

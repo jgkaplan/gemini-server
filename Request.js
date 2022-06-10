@@ -6,6 +6,7 @@ class Request {
     this.cert = c;
     this.fingerprint = c.fingerprint;
     this.params = {};
+    this.baseUrl = '';
     this.data = null;
     this.titanParams = {};
     this.protocol = p;

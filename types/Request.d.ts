@@ -14,5 +14,6 @@ declare class Request {
   cert: tls.PeerCertificate | tls.DetailedPeerCertificate;
   fingerprint: string;
   params: Record<string, string>;
+  baseUrl: string;
   data: Buffer;
 }

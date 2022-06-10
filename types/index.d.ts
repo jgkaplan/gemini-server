@@ -6,13 +6,12 @@ import {
   redirect,
   requireCert,
   requireInput,
-} from "./middleware.d.ts";
+  serveStatic,
+} from "./middleware";
 
-import Request from "./Request.d.ts";
-import Response from "./Response.d.ts";
-import status from "./status.d.ts";
-
-export = GeminiServer;
+import Request from "./Request";
+import Response from "./Response";
+import status from "./status";
 
 declare function GeminiServer({ key, cert }: {
   key: string | Buffer | Array<Buffer | tls.KeyObject> | undefined;
@@ -40,11 +39,16 @@ declare class Server {
 }
 
 declare namespace GeminiServer {
-  export { redirect };
-  export { requireInput };
-  export { requireCert };
-  export { middleware };
-  export { Request };
-  export { Response };
-  export { status };
+  export { 
+    redirect,
+    requireInput,
+    requireCert,
+    serveStatic,
+    middleware,
+    Request,
+    Response,
+    status,
+  }
 }
+
+export = GeminiServer;

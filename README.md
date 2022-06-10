@@ -61,11 +61,17 @@ otherwise request a certificate.
 
 ### Static
 
-NOTE: not yet implemented `gemini.static(dir)` will serve the files in a
-directory
+`gemini.serveStatic(path, ?options)` serves the files in a directory
+| Options | Description | default |
+|---------|-------------|---------|
+|index|Serves files named `index` with extensions specified in `indexExtensions` when accessing a directory without specifying any file|`true`
+|indexExtensions|Defines the extensions to be served by the option `index`|`['.gemini', '.gmi']`
+|redirectOnDirectory|Redirects an user to URL with `/` appended if the supplied path is the name of a directory|`true`
+
+If another handler/middleware is chained behind the static middleware it will get called in case of a file/directory being unaccessable, making it possible to supply a custom "Not Found"-pages.
 
 ```javascript
-app.on("/someFiles", gemini.static("src/files"));
+app.on("/someFiles", gemini.serveStatic("src/files"));
 ```
 
 ### Redirect
