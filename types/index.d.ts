@@ -3,14 +3,16 @@ import { Buffer } from "node";
 
 import {
   middleware,
+  titanMiddleware,
   redirect,
   requireCert,
   requireInput,
-} from "./middleware.d.ts";
+} from "./middleware";
 
-import Request from "./Request.d.ts";
-import Response from "./Response.d.ts";
-import status from "./status.d.ts";
+import Request from "./Request";
+import Response from "./Response";
+import status from "./status";
+import TitanRequest from "./TitanRequest";
 
 export = GeminiServer;
 
@@ -19,6 +21,13 @@ declare function GeminiServer({ key, cert }: {
   cert: string | Buffer | Array<string | Buffer> | undefined;
 }): Server;
 
+interface Route {
+  regexp: RegExp | null;
+  match: (path: string) => boolean;
+  handlers: middleware[];
+  fast_star: boolean;
+}
+
 declare class Server {
   constructor(
     key: string | Buffer | Array<Buffer | tls.KeyObject> | undefined,
@@ -26,17 +35,14 @@ declare class Server {
   );
   _key: string | Buffer | Array<Buffer | tls.KeyObject> | undefined;
   _cert: string | Buffer | Array<string | Buffer> | undefined;
-  _stack: {
-    regexp: RegExp | null;
-    match: (path: string) => boolean;
-    handlers: middleware[];
-    fast_star: boolean;
-  }[];
+  _stack: Route[];
+  _titanStack: Route[];
   _middlewares: middleware[];
   listen(callback?: () => void, port?: number): tls.Server;
   on(path: string, ...handlers: middleware[]): void;
-  use(path: string, ...params: middleware[]): void;
-  use(...params: middleware[]): void;
+  use(path: string, ...params: (middleware|titanMiddleware)[]): void;
+  use(...params: (middleware|titanMiddleware)[]): void;
+  titan(path: string, ...handlers: titanMiddleware[]): void;
 }
 
 declare namespace GeminiServer {
@@ -45,6 +51,7 @@ declare namespace GeminiServer {
   export { requireCert };
   export { middleware };
   export { Request };
+  export { TitanRequest };
   export { Response };
   export { status };
 }

@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import gemini, { Request, Response } from "./index";
+import gemini, { Request, Response, TitanRequest } from "./index";
 
 const options = {
   cert: readFileSync("cert.pem"),
@@ -65,6 +65,20 @@ app.on("/cert", (req: Request, res: Response) => {
 
 app.on("/protected", gemini.requireCert, (_req: Request, res: Response) => {
   res.data("only clients with certificates can get here");
+});
+
+app.titan("/titan", (req: TitanRequest, res: Response) => {
+  res.data("Titan Data: \n" + req.data?.toString("utf-8"));
+});
+
+app.on("/titan", (_req: Request, res: Response) => {
+  res.data("not a titan request!");
+});
+
+app.use("/titan", (req: Request | TitanRequest, _res: Response, next: () => void) => {
+  console.log(req.constructor.name);
+  console.log(`Is TitanRequest? ${req instanceof TitanRequest}`)
+  next();
 });
 
 // app.on("*", (req, res) => {

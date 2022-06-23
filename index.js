@@ -3,6 +3,7 @@ const url = require("url");
 const { pathToRegexp, match } = require("path-to-regexp");
 const Request = require("./Request.js");
 const Response = require("./Response.js");
+const TitanRequest = require("./TitanRequest");
 const middleware = require("./middleware.js");
 const truncate = require("truncate-utf8-bytes");
 
@@ -10,12 +11,14 @@ class Server {
   _key;
   _cert;
   _stack;
+  _titanStack
   _middlewares;
 
   constructor(key, cert) {
     this._key = key;
     this._cert = cert;
     this._stack = [];
+    this._titanStack = [];
     this._middlewares = [];
   }
 
@@ -27,46 +30,76 @@ class Server {
       requestCert: true,
       rejectUnauthorized: false,
     }, (conn) => {
-      conn.setEncoding("utf8");
       conn.on("error", (err) => {
         if (err && err.code === "ECONNRESET") return;
         console.error(err);
       });
       const chunks = [];
-      let isDataReceived = false;
+      let byteCount = 0;
+      let isURLReceived = false;
+      let u, ulength;
+      let titanSize = 0;
+      let protocol = "gemini";
       conn.on("data", async (data) => {
-        // data is Buffer | String
-        // data can be incomplete
-        // Store data until we receive <CR><LF>
-        if (isDataReceived) return;
-
-        chunks.push(data);
-        if (!chunks.join('').includes('\r\n')) return;
-        isDataReceived = true;
-
-        //A url is at most 1024 bytes followed by <CR><LF>
-        let u = new url.URL(truncate(chunks.join('').split('\r\n', 1)[0], 1024));
-        if (u.protocol !== "gemini" && u.protocol !== "gemini:") {
-          //error
-          conn.write("59 Invalid protocol.\r\n");
-          conn.destroy();
-          return;
-        }
-        const req = new Request(u, conn.getPeerCertificate());
-        const res = new Response(51, "Not Found.");
-        let matched_route = null; // route in the stack that matches the request path
+        // Route Matcher, checks whether a route matches the path
         let m = null;
-
         const isMatch = (route) =>
           route.fast_star ||
           route.regexp != null && (m = route.match(u.pathname));
 
+
+        byteCount += data.length
+        // data is Buffer | String
+        // data can be incomplete
+        // Store data until we receive <CR><LF>
+        if (isURLReceived && byteCount < (ulength + titanSize)) return;
+
+        chunks.push(data);
+        if (!data.toString("utf8").includes('\r\n')) return;
+
+        //A url is at most 1024 bytes followed by <CR><LF>
+        let uStr = truncate(Buffer.concat(chunks).toString("utf-8").split(/\r\n/, 1)[0], 1024);
+        if (!u) { 
+          u = new url.URL(uStr.split(';')[0]);
+          ulength = uStr.length + 2;
+          isURLReceived = true;
+          if (!["gemini", "gemini:", "titan", "titan:"].includes(u.protocol)) {
+            //error
+            conn.write("59 Invalid protocol.\r\n");
+            conn.destroy();
+            return;
+          }
+          if (["titan", "titan:"].includes(u.protocol)) {
+            protocol = "titan";
+            let t = uStr.split(';').slice(1).reduce((acc, curr) => {let param = curr.split('='); acc[param[0]] = param[1]; return acc}, {});
+            titanSize = parseInt(t['size']) || 0;
+            if (this._titanStack.some(isMatch)) { // Stop listening when no titan handler exists
+              if (byteCount < (ulength + titanSize)) return;
+            }
+          }
+        }
+        let req;
+        if (protocol == "titan") {
+          req = new TitanRequest(u, conn.getPeerCertificate());
+          let concatenatedBuffer = Buffer.concat(chunks);
+          if (titanSize > 0) req.data = Buffer.from(concatenatedBuffer.slice(concatenatedBuffer.indexOf("\r\n") + 2));
+          let t = uStr.split(';').slice(1).reduce((acc, curr) => {let param = curr.split('='); acc[param[0]] = param[1]; return acc}, {});
+          console.log(req.data.toString("utf-8"))
+          req.uploadSize = titanSize;
+          req.token = t['token'] || null;
+          req.mimeType = t['mime'] || null;
+        } else {
+          req = new Request(u, conn.getPeerCertificate());
+        }
+        
+        const res = new Response(51, "Not Found.");
+        let matched_route = null; // route in the stack that matches the request path
         const middlewares = this._middlewares.filter(isMatch);
         const middlewareHandlers = middlewares.flatMap(({ handlers }) =>
           handlers
         );
 
-        for (const route of this._stack) {
+        for (const route of (protocol == "gemini" ? this._stack : this._titanStack)) {
           if (isMatch(route)) {
             matched_route = route;
             req.params = m ? m.params : null;
@@ -83,6 +116,7 @@ class Server {
         await handle(middlewareHandlers);
 
         if (matched_route === null) {
+          conn.write(res.format_header());
           conn.destroy();
           return;
         }
@@ -120,6 +154,24 @@ class Server {
     });
   }
 
+  titan(path, ...handlers) {
+    this._titanStack.push({
+      regexp: path === "*" ? null : pathToRegexp(path, [], {
+        sensitive: true,
+        strict: false,
+        end: true
+      }),
+      match: path === "*"
+        ? function () {
+          return true;
+        }
+        : match(path, { encode: encodeURI, decode: decodeURIComponent }),
+      handlers: handlers,
+      fast_star: path === "*",
+    })
+
+  }
+
   use(...params) {
     // Apply middlewares to path if it's given as the first argument
     const hasPath = typeof params[0] === "string";
@@ -155,6 +207,7 @@ module.exports = ({ key, cert }) => {
 };
 // module.exports.static = static;
 module.exports.Request = Request;
+module.exports.TitanRequest = TitanRequest
 module.exports.Response = Response;
 module.exports.redirect = middleware.redirect;
 module.exports.requireCert = middleware.requireCert;

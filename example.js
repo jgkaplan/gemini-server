@@ -67,6 +67,20 @@ app.on("/protected", gemini.requireCert, (req, res) => {
   res.data("only clients with certificates can get here");
 });
 
+app.titan("/titan", (req, res) => {
+  res.data("Titan Data: \n" + (req.data != null ? req.data.toString("utf-8") : ""));
+});
+
+app.on("/titan", (_req, res) => {
+  res.data("not a titan request!");
+});
+
+app.use("/titan", (req, _res, next) => {
+  console.log(req.constructor.name);
+  console.log(`Is TitanRequest? ${req instanceof TitanRequest}`)
+  next();
+});
+
 // app.on("*", (req, res) => {
 //   res.data("nyaa");
 // });
