@@ -1,14 +1,15 @@
 import { readFileSync } from "fs";
-import gemini, { Request, Response, TitanRequest } from "./index";
+import gemini, { Request, Response, TitanRequest, NextFunction } from "../lib/index";
 
 const options = {
   cert: readFileSync("cert.pem"),
   key: readFileSync("key.pem"),
+  titanEnabled: true
 };
 
 const app = gemini(options);
 
-app.use((req: Request, _res: Response, next: () => void) => {
+app.use((req: Request, _res: Response, next: NextFunction) => {
   console.log("Handling path", req.path);
   next();
 });
@@ -29,18 +30,20 @@ app.on("/paramTest/:foo", (req: Request, res: Response) => {
   res.data("you went to " + req.params.foo);
 });
 
-app.on("/async", (req: Request, res: Response) => {
+app.on("/async", async (req: Request, res: Response) => {
   if (req.query) {
-    setTimeout(function () {
-      res.data("you typed " + req.query);
-    }, 500);
+      return new Promise(r => {
+        setTimeout(r, 500);
+      }).then(() => {
+        res.data("you typed " + req.query);
+      });
   } else {
     res.input("type something");
   }
 });
 
 app.on(
-  "/testMiddlewear",
+  "/testMiddleware",
   gemini.requireInput("enter something"),
   (req: Request, res: Response) => {
     res.data("thanks. you typed " + req.query);
@@ -71,6 +74,10 @@ app.titan("/titan", (req: TitanRequest, res: Response) => {
   res.data("Titan Data: \n" + req.data?.toString("utf-8"));
 });
 
+app.titan("/titan", gemini.requireCert, (req: TitanRequest, res: Response) => {
+  res.data("You can use gemini middleware in a titan request");
+});
+
 app.on("/titan", (_req: Request, res: Response) => {
   res.data("not a titan request!");
 });
@@ -84,7 +91,6 @@ app.use("/titan", (req: Request | TitanRequest, _res: Response, next: () => void
 // app.on("*", (req, res) => {
 //   res.data("nyaa");
 // });
-
 app.listen(() => {
   console.log("Listening...");
 });

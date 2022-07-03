@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "lib": [
+            "es6"
+        ],
+        "baseUrl": "./",
+        "typeRoots": [
+            "./types",
+            "node_modules/@types"
+        ],
+        "declaration": true,
+        "outDir": "./dist",
+        "allowUnreachableCode": false,
+        "exactOptionalPropertyTypes": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "esModuleInterop": true
+    },
+    "include": [
+        "lib/*",
+        "examples/*"
+    ]
+}
