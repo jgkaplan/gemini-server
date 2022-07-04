@@ -1,10 +1,14 @@
 {
   "name": "gemini-server",
-  "version": "1.8.0",
+  "version": "2.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/lib/index.js",
+  "types": "./dist/lib/index.d.ts",
   "scripts": {
-    "test": "node example.js"
+    "prepublish": "npm run build",
+    "build": "tsc",
+    "test": "npm run build && node dist/examples/example.js",
+    "clean": "rm -r dist"
   },
   "repository": {
     "type": "git",
@@ -17,7 +21,6 @@
     "path-to-regexp": "^6.2.0",
     "truncate-utf8-bytes": "^1.0.2"
   },
-  "types": "./types/index.d.ts",
   "devDependencies": {
     "@types/mime": "^2.0.3",
     "@types/node": "^17.0.19",
