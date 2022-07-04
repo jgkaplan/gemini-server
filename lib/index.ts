@@ -77,8 +77,12 @@ class Server {
       const chunks: any = [];
       let byteCount = 0;
       let isURLReceived = false;
+      let t : titanParams = {
+        token: null,
+        size: 0,
+        mime: null
+      };
       let u: URL, ulength: number;
-      let titanSize = 0;
       let protocol : "gemini" | "titan" = "gemini";
       conn.on("data", async (data : any) => {
         // Route Matcher, checks whether a route matches the path
@@ -91,7 +95,7 @@ class Server {
         // data is Buffer | String
         // data can be incomplete
         // Store data until we receive <CR><LF>
-        if (isURLReceived && byteCount < (ulength + titanSize)) return;
+        if (isURLReceived && byteCount < (ulength + t.size)) return;
 
         chunks.push(data);
         if (!data.toString("utf8").includes('\r\n')) return;
@@ -121,12 +125,7 @@ class Server {
         if (protocol == "titan") {
           let titanreq = new TitanRequest(u, conn.getPeerCertificate());
           let concatenatedBuffer = Buffer.concat(chunks);
-          if (titanSize > 0) titanreq.data = Buffer.from(concatenatedBuffer.slice(concatenatedBuffer.indexOf("\r\n") + 2));
-          let t : titanParams = {
-            token: null,
-            size: 0,
-            mime: null
-          };
+          
           for(const param of uStr.split(';').slice(1)){
             let [k,v] = param.split('=');
             if(k === "token" || k === "mime"){
@@ -138,6 +137,7 @@ class Server {
           }
           if (this._titanStack.some(isMatch) && (byteCount < (ulength + t.size))) return; // Stop listening when no titan handler exists
           // console.log(titanreq.data.toString("utf-8"))
+          if (t.size > 0) titanreq.data = Buffer.from(concatenatedBuffer.slice(concatenatedBuffer.indexOf("\r\n") + 2));
           titanreq.uploadSize = t.size;
           titanreq.token = t.token;
           titanreq.mimeType = t.mime;
@@ -152,7 +152,6 @@ class Server {
           handlers
         );
 
-        // TODO: make sure this is async
         async function handle<R extends (Request | TitanRequest)>(handlers: middleware<R>[], request: R) {
           if (handlers.length > 0) {
             await handlers[0](request, res, () => handle(handlers.slice(1), request));

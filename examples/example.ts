@@ -71,10 +71,11 @@ app.on("/protected", gemini.requireCert, (_req: Request, res: Response) => {
 });
 
 app.titan("/titan", (req: TitanRequest, res: Response) => {
+  console.log(req);
   res.data("Titan Data: \n" + req.data?.toString("utf-8"));
 });
 
-app.titan("/titan", gemini.requireCert, (req: TitanRequest, res: Response) => {
+app.titan("/titanCert", gemini.requireCert, (req: TitanRequest, res: Response) => {
   res.data("You can use gemini middleware in a titan request");
 });
 
