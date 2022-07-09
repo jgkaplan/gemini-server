@@ -3,13 +3,15 @@
 This is a server framework in Node.js for the
 [Gemini Protocol](https://gemini.circumlunar.space/) based on Express.
 
+Typescript type definitions are included.
+
 TLS is a required part of the Gemini protocol. You can generate
 keys/certificates using
 `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj '/CN=localhost'`
 
 ## Install
 
-`npm install gemini-server`
+`npm install --save gemini-server`
 
 ## Usage
 
@@ -59,6 +61,20 @@ to handler only if user input is given, otherwise request input.
 `gemini.requireCert` Proceed to handler only if user certificate is provided,
 otherwise request a certificate.
 
+### Listen for connections
+```javascript
+app.listen();
+```
+or
+```javascript
+app.listen(port);
+```
+or
+```javascript
+app.listen(callback);
+```
+
+
 ### Static
 
 `gemini.serveStatic(path, ?options)` serves the files in a directory
@@ -86,11 +102,13 @@ app.on("/redirectOther", gemini.redirect("http://example.com"));
 
 ### Request object
 
-The request object is passed to request handlers. `req.url`The URL object of the
-request `req.path`The path component of the url `req.query` The query component
-of the url (used for handling input) `req.params` The params of a matched route
-`req.cert` The certificate object, if the client sent one `req.fingerprint` The
-fingerprint of the certificate object, if the client sent one
+The request object is passed to request handlers.
+`req.url` The URL object of the request
+`req.path` The path component of the url
+`req.query` The query component of the url (used for handling input)
+`req.params` The params of a matched route
+`req.cert` The certificate object, if the client sent one 
+`req.fingerprint` The fingerprint of the certificate object, if the client sent one
 
 ### Response object
 
@@ -100,6 +118,8 @@ status of the response (see the gemini docs). s is an int `res.getStatus()`
 return the current status associated with the response
 
 `res.file(filename)` serve the specified file
+
+`res.error(status, message)` or `res.error(message)` Alert the client of an error in processing
 
 `res.data(d)` or `res.data(d, mimeType='text/plain')` Serve raw data as text, or
 as whatever format you want if you specify the mime type.
@@ -128,28 +148,53 @@ app.use("/foo", (req, res, next) => {
 });
 ```
 
-## Example Server
-
+## Titan
+We include support for the [titan protocol](https://communitywiki.org/wiki/Titan), a sister protocol to gemini. This can be enabled by creating the gemini server with
 ```javascript
-const fs = require("fs");
-const gemini = require("gemini-server");
-
 const options = {
-  cert: fs.readFileSync("cert.pem"),
-  key: fs.readFileSync("key.pem"),
+  cert: readFileSync("cert.pem"),
+  key: readFileSync("key.pem"),
+  titanEnabled: true
 };
 
-//Create gemini instance with cert and key
+const app = gemini(options);
+```
+
+or simply by defining a titan route.
+
+`app.titan` can be used similarly to `app.on`, to include handlers for titan routes.
+In such a handler, the request object will also have the following properties:
+`data: Buffer | null`
+`uploadSize: number`
+`token: string | null`
+`mimeType: string | null`
+
+`app.use` will also work for titan routes.
+
+## Example Server (Typescript)
+
+```typescript
+import { readFileSync } from "fs";
+import gemini, { Request, Response, TitanRequest, NextFunction } from "../lib/index";
+
+const options = {
+  cert: readFileSync("cert.pem"),
+  key: readFileSync("key.pem"),
+  titanEnabled: true
+};
+
 const app = gemini(options);
 
-//On a request to / serve a gemini file
-//This automatically detects the mime type and sends that as a header
-app.on("/", (req, res) => {
-  res.file("test.gemini");
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  console.log("Handling path", req.path);
+  next();
 });
 
-//Request input from the user
-app.on("/input", (req, res) => {
+app.on("/", (_req: Request, res: Response) => {
+  res.file("examplePages/test.gemini");
+});
+
+app.on("/input", (req: Request, res: Response) => {
   if (req.query) {
     res.data("you typed " + req.query);
   } else {
@@ -157,28 +202,39 @@ app.on("/input", (req, res) => {
   }
 });
 
-//Route params
-app.on("/paramTest/:foo", (req, res) => {
+app.on("/paramTest/:foo", (req: Request, res: Response) => {
   res.data("you went to " + req.params.foo);
 });
 
+app.on("/async", async (req: Request, res: Response) => {
+  if (req.query) {
+      return new Promise(r => {
+        setTimeout(r, 500);
+      }).then(() => {
+        res.data("you typed " + req.query);
+      });
+  } else {
+    res.input("type something");
+  }
+});
+
 app.on(
-  "/testMiddlewear",
+  "/testMiddleware",
   gemini.requireInput("enter something"),
-  (req, res) => {
+  (req: Request, res: Response) => {
     res.data("thanks. you typed " + req.query);
   },
 );
 
-app.on("/other", (req, res) => {
+app.on("/other", (_req: Request, res: Response) => {
   res.data("welcome to the other page");
 });
 
-app.on("/test", gemini.static("./public/things"));
+app.use("/static", gemini.serveStatic("./examplePages"));
 
 app.on("/redirectMe", gemini.redirect("/other"));
 
-app.on("/cert", (req, res) => {
+app.on("/cert", (req: Request, res: Response) => {
   if (!req.fingerprint) {
     res.certify();
   } else {
@@ -186,11 +242,29 @@ app.on("/cert", (req, res) => {
   }
 });
 
-app.on("/protected", gemini.requireCert, (req, res) => {
+app.on("/protected", gemini.requireCert, (_req: Request, res: Response) => {
   res.data("only clients with certificates can get here");
 });
 
-//start listening. Optionally specify port and callback
+app.titan("/titan", (req: TitanRequest, res: Response) => {
+  console.log(req);
+  res.data("Titan Data: \n" + req.data?.toString("utf-8"));
+});
+
+app.titan("/titanCert", gemini.requireCert, (req: TitanRequest, res: Response) => {
+  res.data("You can use gemini middleware in a titan request");
+});
+
+app.on("/titan", (_req: Request, res: Response) => {
+  res.data("not a titan request!");
+});
+
+app.use("/titan", (req: Request | TitanRequest, _res: Response, next: () => void) => {
+  console.log(req.constructor.name);
+  console.log(`Is TitanRequest? ${req instanceof TitanRequest}`)
+  next();
+});
+
 app.listen(() => {
   console.log("Listening...");
 });
@@ -199,9 +273,9 @@ app.listen(() => {
 ## Todo
 
 - [x] Documentation
-- [ ] Utility functions
-  - [ ] Static directory serving
-    - [ ] automatic index file
+- [x] Utility functions
+  - [x] Static directory serving
+    - [x] automatic index file
 - [x] Certificates
 - [x] Middleware support
 - [ ] Session helper functions

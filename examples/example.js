@@ -1,9 +1,10 @@
-const fs = require("fs");
-const gemini = require("./index.js");
+const {readFileSync} = require('fs');
+const gemini = require("../lib/index");
 
 const options = {
-  cert: fs.readFileSync("cert.pem"),
-  key: fs.readFileSync("key.pem"),
+  cert: readFileSync("cert.pem"),
+  key: readFileSync("key.pem"),
+  titanEnabled: true
 };
 
 const app = gemini(options);
@@ -14,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 app.on("/", (req, res) => {
-  res.file("example/test.gemini");
+  res.file("examplePages/test.gemini");
 });
 
 app.on("/input", (req, res) => {
@@ -29,11 +30,13 @@ app.on("/paramTest/:foo", (req, res) => {
   res.data("you went to " + req.params.foo);
 });
 
-app.on("/async", (req, res) => {
+app.on("/async", async (req, res) => {
   if (req.query) {
-    setTimeout(function () {
-      res.data("you typed " + req.query);
-    }, 500);
+      return new Promise(r => {
+        setTimeout(r, 500);
+      }).then(() => {
+        res.data("you typed " + req.query);
+      });
   } else {
     res.input("type something");
   }
@@ -51,7 +54,7 @@ app.on("/other", (req, res) => {
   res.data("welcome to the other page");
 });
 
-app.use("/static", gemini.serveStatic("./example"));
+app.use("/static", gemini.serveStatic("./examplePages"));
 
 app.on("/redirectMe", gemini.redirect("/other"));
 
@@ -67,10 +70,27 @@ app.on("/protected", gemini.requireCert, (req, res) => {
   res.data("only clients with certificates can get here");
 });
 
+app.titan("/titan", (req, res) => {
+  console.log(req);
+  res.data("Titan Data: \n" + req.data?.toString("utf-8"));
+});
+
+app.titan("/titanCert", gemini.requireCert, (req, res) => {
+  res.data("You can use gemini middleware in a titan request");
+});
+
+app.on("/titan", (_req, res) => {
+  res.data("not a titan request!");
+});
+
+app.use("/titan", (req, _res, next) => {
+  console.log(req.constructor.name);
+  next();
+});
+
 // app.on("*", (req, res) => {
 //   res.data("nyaa");
 // });
-
 app.listen(() => {
   console.log("Listening...");
 });
