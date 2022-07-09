@@ -8,6 +8,7 @@ export default class Request {
   cert: tls.PeerCertificate | tls.DetailedPeerCertificate;
   fingerprint: string;
   params: Record<string, string>;
+  baseUrl: string;
 
   constructor(u: url.URL, c: tls.PeerCertificate | tls.DetailedPeerCertificate){
     this.url = u;
@@ -16,5 +17,6 @@ export default class Request {
     this.cert = c;
     this.fingerprint = c.fingerprint;
     this.params = {};
+    this.baseUrl = '';
   }
 }

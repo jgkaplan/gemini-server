@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import gemini, { Request, Response, TitanRequest, NextFunction } from "../lib/index";
+const {readFileSync} = require('fs');
+const gemini = require("../lib/index");
 
 const options = {
   cert: readFileSync("cert.pem"),
@@ -9,16 +9,16 @@ const options = {
 
 const app = gemini(options);
 
-app.use((req: Request, _res: Response, next: NextFunction) => {
+app.use((req, res, next) => {
   console.log("Handling path", req.path);
   next();
 });
 
-app.on("/", (_req: Request, res: Response) => {
+app.on("/", (req, res) => {
   res.file("examplePages/test.gemini");
 });
 
-app.on("/input", (req: Request, res: Response) => {
+app.on("/input", (req, res) => {
   if (req.query) {
     res.data("you typed " + req.query);
   } else {
@@ -26,11 +26,11 @@ app.on("/input", (req: Request, res: Response) => {
   }
 });
 
-app.on("/paramTest/:foo", (req: Request, res: Response) => {
+app.on("/paramTest/:foo", (req, res) => {
   res.data("you went to " + req.params.foo);
 });
 
-app.on("/async", async (req: Request, res: Response) => {
+app.on("/async", async (req, res) => {
   if (req.query) {
       return new Promise(r => {
         setTimeout(r, 500);
@@ -45,12 +45,12 @@ app.on("/async", async (req: Request, res: Response) => {
 app.on(
   "/testMiddleware",
   gemini.requireInput("enter something"),
-  (req: Request, res: Response) => {
+  (req, res) => {
     res.data("thanks. you typed " + req.query);
   },
 );
 
-app.on("/other", (_req: Request, res: Response) => {
+app.on("/other", (req, res) => {
   res.data("welcome to the other page");
 });
 
@@ -58,7 +58,7 @@ app.use("/static", gemini.serveStatic("./examplePages"));
 
 app.on("/redirectMe", gemini.redirect("/other"));
 
-app.on("/cert", (req: Request, res: Response) => {
+app.on("/cert", (req, res) => {
   if (!req.fingerprint) {
     res.certify();
   } else {
@@ -66,26 +66,25 @@ app.on("/cert", (req: Request, res: Response) => {
   }
 });
 
-app.on("/protected", gemini.requireCert, (_req: Request, res: Response) => {
+app.on("/protected", gemini.requireCert, (req, res) => {
   res.data("only clients with certificates can get here");
 });
 
-app.titan("/titan", (req: TitanRequest, res: Response) => {
+app.titan("/titan", (req, res) => {
   console.log(req);
   res.data("Titan Data: \n" + req.data?.toString("utf-8"));
 });
 
-app.titan("/titanCert", gemini.requireCert, (req: TitanRequest, res: Response) => {
+app.titan("/titanCert", gemini.requireCert, (req, res) => {
   res.data("You can use gemini middleware in a titan request");
 });
 
-app.on("/titan", (_req: Request, res: Response) => {
+app.on("/titan", (_req, res) => {
   res.data("not a titan request!");
 });
 
-app.use("/titan", (req: Request | TitanRequest, _res: Response, next: NextFunction) => {
+app.use("/titan", (req, _res, next) => {
   console.log(req.constructor.name);
-  console.log(`Is TitanRequest? ${req instanceof TitanRequest}`)
   next();
 });
 

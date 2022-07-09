@@ -2,6 +2,7 @@ import tls from "tls";
 import url, { URL } from "url";
 import {
   middleware,
+  serveStatic,
   titanMiddleware,
 } from "./middleware";
 import { pathToRegexp, match, MatchFunction } from "path-to-regexp";
@@ -10,20 +11,15 @@ import Response from "./Response.js";
 import TitanRequest from "./TitanRequest";
 import truncate from "truncate-utf8-bytes";
 
-type Route = {
+type Route<R extends Request = Request> = {
   regexp: RegExp | null;
   match: MatchFunction<Record<string, string>>;
-  handlers: middleware[];
+  handlers: middleware<R>[];
   fast_star: boolean;
+  mountPath: string | null;
 }
 
 type RouteNoHandlers = Omit<Route, "handlers">;
-
-type TitanRoute = RouteNoHandlers & {
-  handlers: titanMiddleware[]
-}
-
-
 
 type titanParams = {size: number, mime: string|null, token: string|null}
 
@@ -38,8 +34,8 @@ function starMatch() {
 class Server {
   _key: string | Buffer | Array<Buffer | tls.KeyObject> | undefined;
   _cert: string | Buffer | Array<string | Buffer> | undefined;
-  _stack: Route[];
-  _titanStack: TitanRoute[];
+  _stack: Route<Request>[];
+  _titanStack: Route<TitanRequest>[];
   _middlewares: Route[];
   _titanEnabled: boolean;
 
@@ -148,17 +144,27 @@ class Server {
         
         const res = new Response(51, "Not Found.");
         const middlewares = this._middlewares.filter(isMatch);
-        const middlewareHandlers = middlewares.flatMap(({ handlers }) =>
-          handlers
-        );
+        // const middlewareHandlers = middlewares.flatMap(({ handlers }) =>
+        //   handlers
+        // );
+        
 
         async function handle<R extends (Request | TitanRequest)>(handlers: middleware<R>[], request: R) {
           if (handlers.length > 0) {
             await handlers[0](request, res, () => handle(handlers.slice(1), request));
           }
         };
+        async function handleMiddleware<R extends (Request | TitanRequest)>(m : Route<R>[], request: R) {
+          if (m.length > 0) {
+            request.baseUrl = m[0].mountPath || '';
+            await handle<R>(m[0].handlers, request);
+            await handleMiddleware<R>(m.slice(1), request);
+          }
+        }
 
-        await handle<Request>(middlewareHandlers, req);
+        await handleMiddleware<Request>(middlewares, req);
+
+        // await handle<Request>(middlewareHandlers, req);
 
         if(protocol === "gemini"){
           for (const route of this._stack) {
@@ -210,6 +216,7 @@ class Server {
         : match(path, { encode: encodeURI, decode: decodeURIComponent }),
       handlers: handlers,
       fast_star: path === "*",
+      mountPath: path
     });
   }
 
@@ -226,6 +233,7 @@ class Server {
         : match(path, { encode: encodeURI, decode: decodeURIComponent }),
       handlers: handlers,
       fast_star: path === "*",
+      mountPath: path
     });
   }
 
@@ -247,6 +255,7 @@ class Server {
           : match(pathOrMiddleware, { encode: encodeURI, decode: decodeURIComponent, end: false }),
         handlers: params,
         fast_star: pathOrMiddleware === "*",
+        mountPath: pathOrMiddleware,
       });
     } else {
       this._middlewares.push({
@@ -254,6 +263,7 @@ class Server {
         match: starMatch,
         handlers: [pathOrMiddleware, ...params],
         fast_star: true,
+        mountPath: null
       });
     }
   }
@@ -282,3 +292,4 @@ import {redirect, requireInput, requireCert} from './middleware';
 GeminiServer.redirect = redirect;
 GeminiServer.requireInput = requireInput;
 GeminiServer.requireCert = requireCert;
+GeminiServer.serveStatic = serveStatic;

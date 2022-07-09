@@ -27,6 +27,12 @@ export default class Response {
     return this._status;
   }
 
+  error(s: status = 40, msg: string) : Response {
+    this.status(s);
+    this._setMeta(msg);
+    return this;
+  }
+
   data(d: Uint8Array | string | Buffer, mimeType: string = "text/plain"): Response {
     this.status(20);
     this._body = d;
