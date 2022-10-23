@@ -1,19 +1,19 @@
-import { status } from "./status";
-import truncate from "truncate-utf8-bytes";
-import mime from "mime";
-import fs from "fs";
+import { status } from './status';
+import truncate from 'truncate-utf8-bytes';
+import mime from 'mime';
+import fs from 'fs';
 
-mime.define({ "text/gemini": ["gemini", "gmi"] });
+mime.define({ 'text/gemini': ['gemini', 'gmi'] });
 
 export default class Response {
   _status: status = 20;
-  _meta: string = "";
+  _meta = '';
   _body: Uint8Array | string | Buffer | null = null;
 
   _setMeta(m: string): void {
     this._meta = truncate(m, 1024);
   }
-  constructor(status: status = 20, meta: string = "") {
+  constructor(status: status = 20, meta = '') {
     this._status = status;
     this._setMeta(meta);
   }
@@ -33,7 +33,7 @@ export default class Response {
     return this;
   }
 
-  data(d: Uint8Array | string | Buffer, mimeType: string = "text/plain"): Response {
+  data(d: Uint8Array | string | Buffer, mimeType = 'text/plain'): Response {
     this.status(20);
     this._body = d;
     this._setMeta(mimeType);
@@ -45,7 +45,7 @@ export default class Response {
   file(filename: string): Response { // might throw error if file doesn't exist
     const mimetype = mime.getType(filename);
     if(mimetype == null){
-      console.error("mime type of file", filename, "not found");
+      console.error('mime type of file', filename, 'not found');
       return this;
     } else {
       this._body = fs.readFileSync(filename);
@@ -55,13 +55,13 @@ export default class Response {
     }
   }
 
-  input(prompt: string, sensitive: boolean = false): Response { //client should re-request same url with input as a query param
+  input(prompt: string, sensitive = false): Response { //client should re-request same url with input as a query param
     this.status(sensitive ? 11 : 10);
     this._setMeta(prompt);
     return this;
   }
 
-  certify(info: string = "Please include a certificate."): Response { //request certificate from client
+  certify(info = 'Please include a certificate.'): Response { //request certificate from client
     this._setMeta(info);
     this.status(60);
     return this;

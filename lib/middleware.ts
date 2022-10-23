@@ -1,6 +1,6 @@
-import Request from "./Request";
-import TitanRequest from "./TitanRequest";
-import Response from "./Response";
+import Request from './Request';
+import TitanRequest from './TitanRequest';
+import Response from './Response';
 import {promises as fs} from 'fs';
 import path from 'path';
 
@@ -20,8 +20,8 @@ export function redirect(url: string): middleware {
   return function (req: Request, res: Response) {
     res.redirect(url);
   };
-};
-export function requireInput(prompt: string = "Input requested"): middleware {
+}
+export function requireInput(prompt = 'Input requested'): middleware {
   return function (req: Request, res: Response, next: NextFunction) {
     if (!req.query) {
       res.input(prompt);
@@ -29,9 +29,9 @@ export function requireInput(prompt: string = "Input requested"): middleware {
       next();
     }
   };
-};
+}
 
-export let requireCert: middleware = function (req: Request, res: Response, next: NextFunction) {
+export const requireCert: middleware = function (req: Request, res: Response, next: NextFunction) {
   if (!req.fingerprint) {
     res.certify();
   } else {
@@ -43,28 +43,28 @@ type serveStaticOptions = {index?: boolean, indexExtensions?: string[], redirect
 
 //TODO: make async, check for malicious paths
 export function serveStatic(basePath: string, opts?: serveStaticOptions) : middleware {
-  let options = { index: true, indexExtensions: ['.gemini', '.gmi'], redirectOnDirectory: true, ...opts }; // apply default options
+  const options = { index: true, indexExtensions: ['.gemini', '.gmi'], redirectOnDirectory: true, ...opts }; // apply default options
   return async function (req, res, next){
     if (req.path != null && !/^[a-zA-Z0-9_\.\/-]+$/.test(req.path)) {
-      res.error(59, "Forbidden characters in path");
+      res.error(59, 'Forbidden characters in path');
       return;
     }
     const filePath = req.path?.replace(req.baseUrl, '') || '/';
     const safeSuffix = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, '');
-    let fullPath = path.join(basePath, safeSuffix);
+    const fullPath = path.join(basePath, safeSuffix);
     try {
-      let stat = await fs.stat(fullPath);
+      const stat = await fs.stat(fullPath);
       if (stat.isDirectory()) {
         if (!filePath.endsWith('/')) {
           if (options.redirectOnDirectory) {
             res.redirect(req.path + '/');
             return;
           } else {
-            throw Error("Not a file but a directory");
+            throw Error('Not a file but a directory');
           }
         }
         if (options.index) {
-          let extension = options.indexExtensions.findIndex(async function(ext){
+          const extension = options.indexExtensions.findIndex(async function(ext){
             try {
               await fs.access(fullPath + 'index' + ext);
               return true;
@@ -87,4 +87,4 @@ export function serveStatic(basePath: string, opts?: serveStaticOptions) : middl
       next();
     }
   };
-};
+}

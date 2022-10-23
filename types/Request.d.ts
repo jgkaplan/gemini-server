@@ -1,5 +1,5 @@
-import tls from "tls";
-import url from "url";
+import tls from 'tls';
+import url from 'url';
 
 export = Request;
 /*~ Write your module's methods and properties in this class */

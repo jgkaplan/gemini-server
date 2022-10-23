@@ -1,10 +1,11 @@
-const tls = require("tls");
-const url = require("url");
-const { pathToRegexp, match } = require("path-to-regexp");
-const Request = require("./Request.js");
-const Response = require("./Response.js");
-const middleware = require("./middleware.js");
-const truncate = require("truncate-utf8-bytes");
+/* eslint-disable @typescript-eslint/no-var-requires */
+const tls = require('tls');
+const url = require('url');
+const { pathToRegexp, match } = require('path-to-regexp');
+const Request = require('./Request.js');
+const Response = require('./Response.js');
+const middleware = require('./middleware.js');
+const truncate = require('truncate-utf8-bytes');
 
 class Server {
   _key;
@@ -27,14 +28,14 @@ class Server {
       requestCert: true,
       rejectUnauthorized: false,
     }, (conn) => {
-      conn.setEncoding("utf8");
-      conn.on("error", (err) => {
-        if (err && err.code === "ECONNRESET") return;
+      conn.setEncoding('utf8');
+      conn.on('error', (err) => {
+        if (err && err.code === 'ECONNRESET') return;
         console.error(err);
       });
       const chunks = [];
       let isDataReceived = false;
-      conn.on("data", async (data) => {
+      conn.on('data', async (data) => {
         // data is Buffer | String
         // data can be incomplete
         // Store data until we receive <CR><LF>
@@ -46,14 +47,14 @@ class Server {
 
         //A url is at most 1024 bytes followed by <CR><LF>
         let u = new url.URL(truncate(chunks.join('').split('\r\n', 1)[0], 1024));
-        if (u.protocol !== "gemini" && u.protocol !== "gemini:") {
+        if (u.protocol !== 'gemini' && u.protocol !== 'gemini:') {
           //error
-          conn.write("59 Invalid protocol.\r\n");
+          conn.write('59 Invalid protocol.\r\n');
           conn.destroy();
           return;
         }
         const req = new Request(u, conn.getPeerCertificate());
-        const res = new Response(51, "Not Found.");
+        const res = new Response(51, 'Not Found.');
         let matched_route = null; // route in the stack that matches the request path
         let m = null;
 
@@ -83,7 +84,7 @@ class Server {
             await handle(middlewares[0].handlers);
             await handleMiddlewares(middlewares.slice(1));
           }
-        }
+        };
 
         await handleMiddlewares(middlewareMatches);
 
@@ -93,7 +94,7 @@ class Server {
         } else if (matched_route !== null) {
           await handle(matched_route.handlers);
         }
-        
+
         conn.write(res.format_header());
         if (res.getStatus() == 20) {
           //send body
@@ -110,41 +111,41 @@ class Server {
 
   on(path, ...handlers) { //path: string, handler: (Request * Response) -> null
     this._stack.push({
-      regexp: path === "*" ? null : pathToRegexp(path, [], {
+      regexp: path === '*' ? null : pathToRegexp(path, [], {
         sensitive: true,
         strict: false,
         end: true
       }),
-      match: path === "*"
+      match: path === '*'
         ? function () {
           return true;
         }
         : match(path, { encode: encodeURI, decode: decodeURIComponent }),
       handlers: handlers,
-      fast_star: path === "*",
+      fast_star: path === '*',
     });
   }
 
   use(...params) {
     // Apply middlewares to path if it's given as the first argument
-    const hasPath = typeof params[0] === "string";
+    const hasPath = typeof params[0] === 'string';
     const path = hasPath && params[0];
 
     const handlers = hasPath ? params.slice(1) : params;
 
     this._middlewares.push({
-      regexp: hasPath && path !== "*"
+      regexp: hasPath && path !== '*'
         ? pathToRegexp(path, [], {
           sensitive: true,
           strict: false,
           end: false
         })
         : null,
-      match: !hasPath || path === "*"
+      match: !hasPath || path === '*'
         ? () => true
         : match(path, { encode: encodeURI, decode: decodeURIComponent, end: false }),
       handlers,
-      fast_star: !hasPath || path === "*",
+      fast_star: !hasPath || path === '*',
       mountPath: hasPath ? path : null,
     });
   }
@@ -155,7 +156,7 @@ class Server {
 
 module.exports = ({ key, cert }) => {
   if (!key || !cert) {
-    throw new Error("Must specify key and cert");
+    throw new Error('Must specify key and cert');
   }
   return new Server(key, cert);
 };

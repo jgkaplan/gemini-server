@@ -1,5 +1,5 @@
-import tls from "tls";
-import url from "url";
+import tls from 'tls';
+import url from 'url';
 
 export default class Request {
   url: url.URL;
