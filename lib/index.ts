@@ -1,15 +1,15 @@
-import tls from "tls";
-import url, { URL } from "url";
+import tls from 'tls';
+import url, { URL } from 'url';
 import {
   middleware,
   serveStatic,
   titanMiddleware,
-} from "./middleware";
-import { pathToRegexp, match, MatchFunction } from "path-to-regexp";
-import Request from "./Request.js";
-import Response from "./Response.js";
-import TitanRequest from "./TitanRequest";
-import truncate from "truncate-utf8-bytes";
+} from './middleware';
+import { pathToRegexp, match, MatchFunction } from 'path-to-regexp';
+import Request from './Request.js';
+import Response from './Response.js';
+import TitanRequest from './TitanRequest';
+import truncate from 'truncate-utf8-bytes';
 
 type Route<R extends Request = Request> = {
   regexp: RegExp | null;
@@ -19,13 +19,13 @@ type Route<R extends Request = Request> = {
   mountPath: string | null;
 }
 
-type RouteNoHandlers = Omit<Route, "handlers">;
+type RouteNoHandlers = Omit<Route, 'handlers'>;
 
 type titanParams = {size: number, mime: string|null, token: string|null}
 
 function starMatch() {
   return {
-    path: "*",
+    path: '*',
     index: 0,
     params: {}
   };
@@ -40,8 +40,8 @@ class Server {
   _titanEnabled: boolean;
 
   constructor(key: string | Buffer | Array<Buffer | tls.KeyObject>,
-              cert: string | Buffer | Array<string | Buffer>,
-              titanEnabled: boolean = false) {
+    cert: string | Buffer | Array<string | Buffer>,
+    titanEnabled = false) {
     this._key = key;
     this._cert = cert;
     this._stack = [];
@@ -54,7 +54,7 @@ class Server {
   listen(callback?: (() => void)): tls.Server;
   listen(portOrCallback: number | (() => void) = 1965, callback?: (() => void)): tls.Server {
     let port = 1965;
-    if(typeof portOrCallback === "number"){
+    if(typeof portOrCallback === 'number'){
       port = portOrCallback;
     }else{
       callback = portOrCallback;
@@ -66,74 +66,74 @@ class Server {
       requestCert: true,
       rejectUnauthorized: false,
     }, (conn) => {
-      conn.on("error", (err) => {
-        if (err && err.code === "ECONNRESET") return;
+      conn.on('error', (err) => {
+        if (err && err.code === 'ECONNRESET') return;
         console.error(err);
       });
       const chunks: any = [];
       let byteCount = 0;
       let isURLReceived = false;
-      let t : titanParams = {
+      const t : titanParams = {
         token: null,
         size: 0,
         mime: null
       };
       let u: URL, ulength: number;
-      let protocol : "gemini" | "titan" = "gemini";
-      conn.on("data", async (data : any) => {
+      let protocol : 'gemini' | 'titan' = 'gemini';
+      conn.on('data', async (data : any) => {
         // Route Matcher, checks whether a route matches the path
         const getMatch = (route: RouteNoHandlers) =>
           route.fast_star ||
           route.regexp != null && route.match(u.pathname as string); //TODO: move this to after u is defined?
         const isMatch = (route: RouteNoHandlers) => getMatch(route) != false;
 
-        byteCount += data.length
+        byteCount += data.length;
         // data is Buffer | String
         // data can be incomplete
         // Store data until we receive <CR><LF>
         if (isURLReceived && byteCount < (ulength + t.size)) return;
 
         chunks.push(data);
-        if (!data.toString("utf8").includes('\r\n')) return;
+        if (!data.toString('utf8').includes('\r\n')) return;
 
         //A url is at most 1024 bytes followed by <CR><LF>
-        let uStr = truncate(Buffer.concat(chunks).toString("utf-8").split(/\r\n/, 1)[0], 1024);
+        const uStr = truncate(Buffer.concat(chunks).toString('utf-8').split(/\r\n/, 1)[0], 1024);
         let req : Request | TitanRequest;
         if (!u) { 
           u = new url.URL(uStr.split(';')[0]);
           ulength = uStr.length + 2;
           isURLReceived = true;
           req = new Request(u, conn.getPeerCertificate());
-          if (!["gemini", "gemini:", "titan", "titan:"].includes(u.protocol as string) || ["titan", "titan:"].includes(u.protocol as string) && !this._titanEnabled) {
+          if (!['gemini', 'gemini:', 'titan', 'titan:'].includes(u.protocol as string) || ['titan', 'titan:'].includes(u.protocol as string) && !this._titanEnabled) {
             //error
-            conn.write("59 Invalid protocol.\r\n");
+            conn.write('59 Invalid protocol.\r\n');
             conn.destroy();
             return;
           }
-          if (["titan", "titan:"].includes(u.protocol as string)) {
-            protocol = "titan";
+          if (['titan', 'titan:'].includes(u.protocol as string)) {
+            protocol = 'titan';
           }else{
-            protocol = "gemini";
+            protocol = 'gemini';
           }
         }else{
           return;
         }
-        if (protocol == "titan") {
-          let titanreq = new TitanRequest(u, conn.getPeerCertificate());
-          let concatenatedBuffer = Buffer.concat(chunks);
+        if (protocol == 'titan') {
+          const titanreq = new TitanRequest(u, conn.getPeerCertificate());
+          const concatenatedBuffer = Buffer.concat(chunks);
           
           for(const param of uStr.split(';').slice(1)){
-            let [k,v] = param.split('=');
-            if(k === "token" || k === "mime"){
+            const [k,v] = param.split('=');
+            if(k === 'token' || k === 'mime'){
               t[k] = v;
-            } else if (k === "size"){
+            } else if (k === 'size'){
               t[k] = parseInt(v) || 0;
             }
             
           }
           if (this._titanStack.some(isMatch) && (byteCount < (ulength + t.size))) return; // Stop listening when no titan handler exists
           // console.log(titanreq.data.toString("utf-8"))
-          if (t.size > 0) titanreq.data = Buffer.from(concatenatedBuffer.slice(concatenatedBuffer.indexOf("\r\n") + 2));
+          if (t.size > 0) titanreq.data = Buffer.from(concatenatedBuffer.slice(concatenatedBuffer.indexOf('\r\n') + 2));
           titanreq.uploadSize = t.size;
           titanreq.token = t.token;
           titanreq.mimeType = t.mime;
@@ -142,7 +142,7 @@ class Server {
           req = new Request(u, conn.getPeerCertificate());
         }
         
-        const res = new Response(51, "Not Found.");
+        const res = new Response(51, 'Not Found.');
         const middlewares = this._middlewares.filter(isMatch);
         // const middlewareHandlers = middlewares.flatMap(({ handlers }) =>
         //   handlers
@@ -153,7 +153,7 @@ class Server {
           if (handlers.length > 0) {
             await handlers[0](request, res, () => handle(handlers.slice(1), request));
           }
-        };
+        }
         async function handleMiddleware<R extends (Request | TitanRequest)>(m : Route<R>[], request: R) {
           if (m.length > 0) {
             request.baseUrl = m[0].mountPath || '';
@@ -166,11 +166,11 @@ class Server {
 
         // await handle<Request>(middlewareHandlers, req);
 
-        if(protocol === "gemini"){
+        if(protocol === 'gemini'){
           for (const route of this._stack) {
             if (isMatch(route)) {
-              let m = getMatch(route);
-              if(typeof m !== "boolean"){
+              const m = getMatch(route);
+              if(typeof m !== 'boolean'){
                 req.params = m.params;
               }
               await handle<Request>(route.handlers, req);
@@ -180,8 +180,8 @@ class Server {
         }else{
           for (const route of this._titanStack) {
             if (isMatch(route)) {
-              let m = getMatch(route);
-              if(typeof m !== "boolean"){
+              const m = getMatch(route);
+              if(typeof m !== 'boolean'){
                 req.params = m.params;
               }
               await handle<TitanRequest>(route.handlers, req as TitanRequest);
@@ -206,16 +206,16 @@ class Server {
 
   on(path: string, ...handlers: middleware[]): void {
     this._stack.push({
-      regexp: path === "*" ? null : pathToRegexp(path, [], {
+      regexp: path === '*' ? null : pathToRegexp(path, [], {
         sensitive: true,
         strict: false,
         end: true
       }),
-      match: path === "*"
+      match: path === '*'
         ? starMatch
         : match(path, { encode: encodeURI, decode: decodeURIComponent }),
       handlers: handlers,
-      fast_star: path === "*",
+      fast_star: path === '*',
       mountPath: path
     });
   }
@@ -223,16 +223,16 @@ class Server {
   titan(path: string, ...handlers: titanMiddleware[]): void {
     this._titanEnabled = true;
     this._titanStack.push({
-      regexp: path === "*" ? null : pathToRegexp(path, [], {
+      regexp: path === '*' ? null : pathToRegexp(path, [], {
         sensitive: true,
         strict: false,
         end: true
       }),
-      match: path === "*"
+      match: path === '*'
         ? starMatch
         : match(path, { encode: encodeURI, decode: decodeURIComponent }),
       handlers: handlers,
-      fast_star: path === "*",
+      fast_star: path === '*',
       mountPath: path
     });
   }
@@ -241,20 +241,20 @@ class Server {
   use(...params: middleware[]): void;
   use(path: string, ...params: middleware[]): void;
   use(pathOrMiddleware: string | middleware, ...params: middleware[]): void {
-    if(typeof pathOrMiddleware == "string"){
+    if(typeof pathOrMiddleware == 'string'){
       this._middlewares.push({
-        regexp: pathOrMiddleware !== "*"
+        regexp: pathOrMiddleware !== '*'
           ? pathToRegexp(pathOrMiddleware, [], {
             sensitive: true,
             strict: false,
             end: false
           })
           : null,
-        match: pathOrMiddleware === "*"
+        match: pathOrMiddleware === '*'
           ? starMatch
           : match(pathOrMiddleware, { encode: encodeURI, decode: decodeURIComponent, end: false }),
         handlers: params,
-        fast_star: pathOrMiddleware === "*",
+        fast_star: pathOrMiddleware === '*',
         mountPath: pathOrMiddleware,
       });
     } else {
@@ -277,16 +277,16 @@ type ServerOptions = {
 
 export default function GeminiServer({key, cert, titanEnabled=false}: ServerOptions) : Server {
   if (!key || !cert) {
-    throw new Error("Must specify key and cert");
+    throw new Error('Must specify key and cert');
   }
   return new Server(key, cert, titanEnabled);
 }
 
-export {default as Request} from "./Request";
-export {default as TitanRequest} from "./TitanRequest";
-export {default as Response} from "./Response";
-export {titanMiddleware, middleware, NextFunction} from "./middleware";
-export { status } from "./status";
+export {default as Request} from './Request';
+export {default as TitanRequest} from './TitanRequest';
+export {default as Response} from './Response';
+export {titanMiddleware, middleware, NextFunction} from './middleware';
+export { status } from './status';
 
 import {redirect, requireInput, requireCert} from './middleware';
 GeminiServer.redirect = redirect;

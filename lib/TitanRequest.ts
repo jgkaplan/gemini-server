@@ -1,6 +1,6 @@
-import Request from "./Request";
-import tls from "tls";
-import url from "url";
+import Request from './Request';
+import tls from 'tls';
+import url from 'url';
 
 export default class TitanRequest extends Request {
   data: Buffer | null;

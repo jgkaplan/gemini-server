@@ -1,5 +1,5 @@
-import tls from "tls";
-import { Buffer } from "node";
+import tls from 'tls';
+import { Buffer } from 'node';
 
 import {
   middleware,
@@ -7,11 +7,11 @@ import {
   requireCert,
   requireInput,
   serveStatic,
-} from "./middleware";
+} from './middleware';
 
-import Request from "./Request";
-import Response from "./Response";
-import status from "./status";
+import Request from './Request';
+import Response from './Response';
+import status from './status';
 
 declare function GeminiServer({ key, cert }: {
   key: string | Buffer | Array<Buffer | tls.KeyObject> | undefined;
@@ -48,7 +48,7 @@ declare namespace GeminiServer {
     Request,
     Response,
     status,
-  }
+  };
 }
 
 export = GeminiServer;
