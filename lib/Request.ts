@@ -3,6 +3,7 @@ import url from "url";
 
 export default class Request {
   url: url.URL;
+  host: string | null;
   path: string | null;
   query: string | null;
   cert: tls.PeerCertificate | tls.DetailedPeerCertificate;
@@ -12,6 +13,7 @@ export default class Request {
 
   constructor(u: url.URL, c: tls.PeerCertificate | tls.DetailedPeerCertificate){
     this.url = u;
+    this.host = u.host;
     this.path = u.pathname;
     this.query = u.search?.slice(1) || null;
     this.cert = c;
