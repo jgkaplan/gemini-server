@@ -55,7 +55,7 @@ export function serveStatic(basePath: string, opts?: serveStaticOptions) : middl
     try {
       let stat = await fs.stat(fullPath);
       if (stat.isDirectory()) {
-        if (!req.path?.endsWith('/')) {
+        if (!filePath.endsWith('/')) {
           if (options.redirectOnDirectory) {
             res.redirect(req.path + '/');
             return;
