@@ -64,14 +64,16 @@ export function serveStatic(basePath: string, opts?: serveStaticOptions) : middl
           }
         }
         if (options.index) {
-          let extension = options.indexExtensions.findIndex(async function(ext){
+          let extension = 0;
+          for(let i = 0; i < options.indexExtensions.length; i++) {
             try {
-              await fs.access(fullPath + 'index' + ext);
-              return true;
-            } catch {
-              return false;
+              let file = fullPath + 'index' + options.indexExtensions[i];
+              await fs.access(file);
+              extension = i;
+              break;
+            } catch(ex) {
             }
-          });
+          }
           if (extension !== -1) {
             res.file(fullPath + 'index' + options.indexExtensions[extension]);
             return;
