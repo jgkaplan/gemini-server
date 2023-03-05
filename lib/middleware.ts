@@ -64,7 +64,7 @@ export function serveStatic(basePath: string, opts?: serveStaticOptions) : middl
           }
         }
         if (options.index) {
-          let extension = 0;
+          let extension = -1;
           for(let i = 0; i < options.indexExtensions.length; i++) {
             try {
               let file = fullPath + 'index' + options.indexExtensions[i];
