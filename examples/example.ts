@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import gemini, { Request, Response, TitanRequest, NextFunction } from "../lib/index";
+import gemini, { Request, Response, TitanRequest, NextFunction } from "../lib";
 
 const options = {
   cert: readFileSync("cert.pem"),

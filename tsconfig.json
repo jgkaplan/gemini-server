@@ -6,7 +6,6 @@
         ],
         "baseUrl": "./",
         "typeRoots": [
-            "./types",
             "node_modules/@types"
         ],
         "declaration": true,
@@ -21,6 +20,11 @@
     },
     "include": [
         "lib/*",
-        "examples/*"
+        "examples/example.ts"
+    ],
+    "exclude": [
+        "build/**/*",
+        "node_modules",
+        "dist"
     ]
 }

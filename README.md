@@ -18,7 +18,7 @@ keys/certificates using
 ### Create a gemini server
 
 ```javascript
-const gemini = require("gemini-server");
+const gemini = require("gemini-server").default;
 
 const app = gemini(options);
 ```
