@@ -100,6 +100,20 @@ class Server {
         let uStr = truncate(Buffer.concat(chunks).toString("utf-8").split(/\r\n/, 1)[0], 1024);
         let req : Request | TitanRequest;
         if (!u) { 
+          // This pattern matches a string that starts with any of the HTTP methods, 
+          // followed by an optional "http://" or "https://" protocol, 
+          // one or more word characters, a dot, one or more word characters, 
+          // zero or more forward slashes and word characters, another space, 
+          // "HTTP/", a digit, a period, and another digit. 
+          // If the `test()` method returns `true`, we know that the string contains 
+          // an HTTP or HTTPS URL.
+          const HTTPRegex = /^(GET|POST|PUT|DELETE|HEAD|OPTIONS)\s(https?:\/\/)?\S+\sHTTP\/\d\.\d$/;
+          if (HTTPRegex.test(uStr)){
+            // Maybe remove these console logs
+            console.log("Ignoring an HTTP request:");
+            console.log(uStr);
+            return;
+          }
           u = new url.URL(uStr.split(';')[0]);
           ulength = uStr.length + 2;
           isURLReceived = true;
