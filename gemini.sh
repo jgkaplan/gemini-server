@@ -52,13 +52,13 @@
 
 function gemini () {
     if [[ $1 =~ ^((gemini)://)?([^/:]+)(:([0-9]+))?/(.*)$ ]]; then
-	schema=${BASH_REMATCH[2]:-gemini}
-	host=${BASH_REMATCH[3]}
-	port=${BASH_REMATCH[5]:-1965}
-	path=${BASH_REMATCH[6]}
-	echo Contacting $host:$port...
-	echo -e "$schema://$host:$port/$path\r\n" \
-	    | openssl s_client -quiet -connect "$host:$port" 2>/dev/null
+	gschema=${BASH_REMATCH[2]:-gemini}
+	ghost=${BASH_REMATCH[3]}
+	gport=${BASH_REMATCH[5]:-1965}
+	gpath=${BASH_REMATCH[6]}
+	echo Contacting $ghost:$gport...
+	echo -e "$gschema://$ghost:$gport/$gpath\r\n" \
+	    | openssl s_client -quiet -connect "$ghost:$gport" 2>/dev/null
     else
 	echo $1 is not a Gemini URL
     fi
@@ -69,29 +69,29 @@ function titan () {
         echo Usage: titan URL TOKEN [FILE]
 	return
     else
-	token=$2
+	gtoken=$2
     fi
     if [[ "$1" =~ ^((titan)://)?([^/:]+)(:([0-9]+))?/(.*)$ ]]; then
-	schema=${BASH_REMATCH[2]:-titan}
-	host=${BASH_REMATCH[3]}
-	port=${BASH_REMATCH[5]:-1965}
-	path=${BASH_REMATCH[6]}
-	remove=0
+	gschema=${BASH_REMATCH[2]:-titan}
+	ghost=${BASH_REMATCH[3]}
+	gport=${BASH_REMATCH[5]:-1965}
+	gpath=${BASH_REMATCH[6]}
+	gremove=0
 	if [[ -z "$3" ]]; then
 	    echo Type you text and end your input with Ctrl+D
-	    file=$(mktemp)
-	    remove=1
-	    cat - > "$file"
+	    gfile=$(mktemp)
+	    gremove=1
+	    cat - > "$gfile"
 	else
-	    file="$3"
+	    gfile="$3"
 	fi
-	mime=$(file --brief --mime-type "$file")
-	size=$(wc -c < "$file")
-	echo Posting $size bytes of $mime to $host:$port...
-	(echo -e "$schema://$host:$port/$path;token=$token;mime=$mime;size=$size\r"; cat "$file") \
-	    | openssl s_client -quiet -connect $host:$port 2>/dev/null
-	if [[ $remove == "1" ]]; then
-	    rm "$file"
+	gmime=$(file --brief --mime-type "$gfile")
+	gsize=$(wc -c < "$gfile")
+	echo Posting $gsize bytes of $gmime to $ghost:$gport...
+	(echo -e "$gschema://$ghost:$gport/$gpath;token=$gtoken;mime=$gmime;size=$gsize\r"; cat "$gfile") \
+	    | openssl s_client -quiet -connect $ghost:$gport 2>/dev/null
+	if [[ $gremove == "1" ]]; then
+	    rm "$gfile"
 	fi
     else
 	echo $1 is not a Titan URL
